@@ -8,9 +8,9 @@ import (
 )
 
 type Config struct {
-	Name         string `yaml:"name"`            // Display name
-	Selected     bool                            // Selected config or not
-	Status       bool                            // Display or not
+	Name         string   `yaml:"name"` // Display name
+	Selected     bool     // Selected config or not
+	Status       bool     // Display or not
 	Config       []Config `yaml:"config"`        // Sub-configs (recursive)
 	Command      string   `yaml:"command"`       // bash command
 	Container    string   `yaml:"container"`     // The name of the image from which the container is made
@@ -37,16 +37,12 @@ func (cfg *Config) ChildConfigsInsert(c *Config) {
 	}
 	if c.ChildConfigs != nil {
 		for i = 0; i < len(c.Config); i++ {
-			for j:=0;j<len(c.ChildConfigs);j++ {
-				//for _, cc := range c.ChildConfigs {
-					name = c.Config[i].Name
-					replace = cfg.ChildConfigsPlaceholders(name, c.ChildConfigs[j])
-					//cfg.ChildConfigsPlaceholders(name, c.ChildConfigs[j])
-					c.Config[i].Config = append(c.Config[i].Config, replace)
-				//}
+			for j := 0; j < len(c.ChildConfigs); j++ {
+				name = c.Config[i].Name
+				replace = cfg.ChildConfigsPlaceholders(name, c.ChildConfigs[j])
+				c.Config[i].Config = append(c.Config[i].Config, replace)
 			}
 		}
-		//c.ChildConfigs = nil
 	}
 }
 
@@ -56,7 +52,6 @@ func (cfg *Config) ChildConfigsPlaceholders(name string, c Config) Config {
 	if c.Config != nil {
 		for i := 0; i < len(c.Config); i++ {
 			config.Config = append(config.Config, cfg.ChildConfigsPlaceholders(name, c.Config[i]))
-			//config.Config[i] = cfg.ChildConfigsPlaceholders(name, c.Config[i])
 		}
 	}
 	config.Name = strings.Replace(c.Name, "@parent", name, 1)

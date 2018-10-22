@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-
 type Docker struct {
 	client         *client.Client
 	context        context.Context
@@ -84,7 +83,7 @@ func (d *Docker) DockerCommandRun(command string, container string, terminal *st
 			buf := make([]byte, 1024)
 			_, err = c.Read(buf)
 			if err != nil {
-				c.Close()
+				_ = c.Close()
 				*terminal += "Finished ->" + command + "\n"
 				*terminal += "Close connection err: " + err.Error() + "\n"
 				d.updateTerminal(terminal)
