@@ -1,1 +1,13 @@
 ---
+
+config:
+  - name: "group 1"
+    config:
+      - name: "command 1"
+        command: "ls -lah"
+        container: "ubuntu"
+  - name: "group 2"
+    config:
+      - name: "command 2"
+        command: "ls -lah /var"
+        container: "ubuntu"
