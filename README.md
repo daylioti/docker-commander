@@ -1,5 +1,5 @@
 
-<code>docker-commander</code> is a cross-platform, customizable, execution commands dashdoard based on <a href="https://github.com/gizak/termui">termui</a>
+<code>docker-commander</code> is a cross-platform, customizable, execution commands dashboard based on <a href="https://github.com/gizak/termui">termui</a>
 
 <h2>Installation</h2>
 
