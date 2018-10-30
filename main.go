@@ -1,7 +1,7 @@
 package main
 
 import (
-	"provisioner/ui"
+	"docker-commander/ui"
 )
 
 func main() {

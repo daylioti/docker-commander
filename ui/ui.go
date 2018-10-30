@@ -2,8 +2,8 @@ package ui
 
 import (
 	"github.com/gizak/termui"
-	"provisioner/config"
-	"provisioner/docker"
+	"docker-commander/config"
+	"docker-commander/docker"
 )
 
 type UI struct {
@@ -47,7 +47,6 @@ func (ui *UI) Init() {
 	}
 	ui.terminal = termui.NewPar("")
 	ui.terminal.Width = termui.Body.Width
-	ui.terminal.Height = 60
 
 	ui.NormilizeStatus(ui.cnf, ui.Path(ui.cnf))
 	ui.Render(ui.cnf)
@@ -156,6 +155,7 @@ func (ui *UI) TerminalRender() {
 	}
 	ui.terminal.Width = termui.Body.Width
 	ui.terminal.Y = h
+	ui.terminal.Height = termui.TermHeight() - h
 	termui.Render(ui.terminal)
 }
 
