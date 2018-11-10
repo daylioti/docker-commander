@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/gizak/termui"
 	"docker-commander/config"
 	"docker-commander/docker"
+	"github.com/gizak/termui"
 )
 
 type UI struct {
@@ -42,9 +42,6 @@ func (ui *UI) Init() {
 		dockerExecute.Init(updateTerminal)
 	}()
 
-	for i := 0; i < 8; i++ {
-		ui.lists = append(ui.lists, termui.NewList())
-	}
 	ui.terminal = termui.NewPar("")
 	ui.terminal.Width = termui.Body.Width
 
@@ -86,10 +83,10 @@ func (ui *UI) Init() {
 
 func (ui *UI) changeSelected(x int, y int, cnf *config.Config) {
 	path := ui.Path(ui.cnf)
-	var c *config.Config  // Current selected
-	var cp *config.Config // Parrent of selected
-	var cu *config.Config // Above selected
-	var cd *config.Config // Below selected.
+	var c *config.Config
+	var cp *config.Config
+	var cu *config.Config
+	var cd *config.Config
 	cnf.Selected = false
 	c = cnf
 	for i := 0; i <= len(path); i++ {
@@ -127,11 +124,9 @@ func (ui *UI) changeSelected(x int, y int, cnf *config.Config) {
 
 func (ui *UI) getSelected() config.Config {
 	var c *config.Config
-	var path []int
-	path = ui.Path(ui.cnf)
 	c = ui.cnf
-	for i := 0; i < len(path); i++ {
-		c = &c.Config[path[i]]
+	for _, path := range ui.Path(ui.cnf) {
+      c = &c.Config[path]
 	}
 	return *c
 }
@@ -180,7 +175,7 @@ func (ui *UI) Path(c *config.Config) []int {
 }
 
 func (ui *UI) NormilizeStatus(c *config.Config, path []int) {
-	if len(path) == 0 {
+	if len(path) == 0 { 
 		return
 	}
 	var cnf *config.Config
@@ -208,13 +203,11 @@ func (ui *UI) NormilizeStatus(c *config.Config, path []int) {
 }
 
 func (ui *UI) resetStatus(cnf *config.Config) {
-	var c *config.Config
-	c = cnf
 	cnf.Selected = false
 	cnf.Status = false
-	if len(c.Config) > 0 {
-		for i := 0; i < len(c.Config); i++ {
-			ui.resetStatus(&c.Config[i])
+	if len(cnf.Config) > 0 {
+		for i := 0; i < len(cnf.Config); i++ {
+			ui.resetStatus(&cnf.Config[i])
 		}
 	}
 }
@@ -233,41 +226,34 @@ func (ui *UI) getSelectedPath(path *[]int, cnf *config.Config) bool {
 }
 
 func (ui *UI) GetTermuiLists(c *config.Config) {
-	var path []int
-	var items [8][]string
-	path = ui.Path(ui.cnf)
-	for i := 0; i < len(path); i++ {
-		for j := 0; j < len(c.Config); j++ {
-			if c.Config[j].Status == true {
-				if c.Config[j].Selected == true {
-					items[i] = append(items[i], StringColor(c.Config[j].Name, "fg-white,bg-green"))
-				} else {
-					items[i] = append(items[i], c.Config[j].Name)
-				}
-			}
-		}
-		c = &c.Config[path[i]]
-		if i == len(path)-1 {
-			// Next menu
-			for oo := 0; oo < len(c.Config); oo++ {
-				items[i+1] = append(items[i+1], c.Config[oo].Name)
-			}
-		}
-	}
+	var item string
+	var width int
+	var x int
 	ui.lists = nil
-	for i := 0; i < 8; i++ {
-		if i < len(items) && len(items[i]) > 0 {
-			if len(ui.lists)-1 < i {
-				// Create new item.
-				ui.lists = append(ui.lists, termui.NewList())
-			}
-			ui.lists[i].Items = items[i]
-			ui.lists[i].Height = len(items[i]) + 2
-		} else {
-			ui.lists = append(ui.lists, termui.NewList())
+    for i, path := range append(ui.Path(ui.cnf), 0) {
+		if len(c.Config) <= path {
+			break
 		}
-		ui.lists[i].Width = termui.Body.Width / 8
-		ui.lists[i].X = i * termui.Body.Width / 8
+    	width = 0
+		ui.lists = append(ui.lists, termui.NewList())
+        for _, cnf := range c.Config {
+            if len(cnf.Name) > width {
+            	width = len(cnf.Name)
+			}
+        	if cnf.Selected == true {
+              item =  StringColor(cnf.Name, "fg-white,bg-green")
+			} else {
+				item = cnf.Name
+			}
+			ui.lists[i].Items = append(ui.lists[i].Items, item)
+		}
+
+		ui.lists[i].Height = len(ui.lists[i].Items) + 2
+		ui.lists[i].Width = width + 3
+		ui.lists[i].X = x
+		x += ui.lists[i].Width
+
+		c = &c.Config[path]
 	}
 }
 

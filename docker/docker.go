@@ -84,7 +84,7 @@ func (d *Docker) DockerCommandRun(command string, container string, terminal *st
 			_, err = c.Read(buf)
 			if err != nil {
 				_ = c.Close()
-				*terminal += "Finished ->" + command + "\n"
+				*terminal += "Finished -> " + command + "\n"
 				*terminal += "Close connection err: " + err.Error() + "\n"
 				d.updateTerminal(terminal)
 				return
@@ -99,11 +99,10 @@ func (d *Docker) DockerCommandRun(command string, container string, terminal *st
 }
 
 func (d *Docker) GetContainerId(name string) string {
-	var container string
 	for _, c := range d.containers {
-		if c.Image == name {
-			container = c.ID
+		if strings.Contains(c.Image, name) {
+			return c.ID
 		}
 	}
-	return container
+	return ""
 }
