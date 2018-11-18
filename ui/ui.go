@@ -34,18 +34,18 @@ func (ui *UI) Init() {
 	}
 
 	dockerExecute := new(docker.Docker)
-	updateTerminal := func(term *string) {
-		ui.terminal.Text = *term
-		ui.TerminalRender()
+
+	updateTerminal := func() {
+		if ui.terminal != nil && ui.terminal.Text != *dockerExecute.RunningTerminal {
+			ui.terminal.Text = *dockerExecute.RunningTerminal
+			ui.TerminalRender()
+		}
 	}
 	go func() {
 		dockerExecute.Init(updateTerminal)
 	}()
 
-	ui.terminal = termui.NewPar("")
-	ui.terminal.Width = termui.Body.Width
-
-	ui.NormilizeStatus(ui.cnf, ui.Path(ui.cnf))
+	ui.updateStatus(ui.cnf, ui.Path(ui.cnf))
 	ui.Render(ui.cnf)
 
 	termui.Body.Align()
@@ -57,24 +57,30 @@ func (ui *UI) Init() {
 	termui.Handle("/sys/kbd/<up>", func(termui.Event) {
 		ui.changeSelected(0, -1, ui.cnf)
 		ui.Render(ui.cnf)
+		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<left>", func(termui.Event) {
 		ui.changeSelected(-1, 0, ui.cnf)
 		ui.Render(ui.cnf)
+		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<right>", func(termui.Event) {
 		ui.changeSelected(1, 0, ui.cnf)
 		ui.Render(ui.cnf)
+		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<down>", func(termui.Event) {
 		ui.changeSelected(0, 1, ui.cnf)
 		ui.Render(ui.cnf)
+		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
 		selected := ui.getSelected()
 		if selected.Command != "" {
-			dockerExecute.Exec(selected.Command, ui.Path(ui.cnf), selected.Container)
 			ui.TerminalRender()
+			dockerExecute.SetTerminalHeight(ui.terminal.Height)
+			dockerExecute.Exec(selected.Command, ui.Path(ui.cnf), selected.Container)
+
 		}
 	})
 
@@ -133,15 +139,17 @@ func (ui *UI) getSelected() config.Config {
 
 func (ui *UI) Render(cnf *config.Config) {
 	ui.preRender(cnf)
-	ui.GetTermuiLists(cnf)
+	ui.updateRenderElements(cnf)
 	termui.Clear()
 	for i := 0; i < len(ui.lists); i++ {
 		termui.Render(ui.lists[i])
 	}
-	ui.TerminalRender()
 }
 
 func (ui *UI) TerminalRender() {
+	if ui.terminal == nil {
+		ui.terminal = termui.NewPar("")
+	}
 	var h int
 	for i := 0; i < len(ui.lists); i++ {
 		if ui.lists[i].Height > h {
@@ -159,13 +167,13 @@ func (ui *UI) preRender(cnf *config.Config) {
 	path = ui.Path(cnf)
 
 	ui.resetStatus(cnf)
-	ui.NormilizeStatus(cnf, path)
+	ui.updateStatus(cnf, path)
 }
 
-func (ui *UI) Path(c *config.Config) []int {
+func (ui *UI) Path(cnf *config.Config) []int {
 	var path []int
 	var p []int
-	ui.getSelectedPath(&path, c)
+	ui.getSelectedPath(&path, cnf)
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] > 0 {
 			p = append(p, int(path[i])-1)
@@ -174,22 +182,14 @@ func (ui *UI) Path(c *config.Config) []int {
 	return p
 }
 
-func (ui *UI) NormilizeStatus(c *config.Config, path []int) {
+func (ui *UI) updateStatus(cnf *config.Config, path []int) {
 	if len(path) == 0 { 
 		return
 	}
-	var cnf *config.Config
-	var p int
 	var nextPath []int
-	p = path[0]
+	cnf = &cnf.Config[path[0]]
 	nextPath = path[1:]
-	cnf = &c.Config[p]
 
-	if len(c.Config) > 0 {
-		for i := 0; i < len(c.Config); i++ {
-			c.Config[i].Status = true
-		}
-	}
 	if len(cnf.Config) > 0 {
 		for i := 0; i < len(cnf.Config); i++ {
 			cnf.Config[i].Status = true
@@ -198,7 +198,7 @@ func (ui *UI) NormilizeStatus(c *config.Config, path []int) {
 	if len(nextPath) == 0 {
 		cnf.Selected = true
 	} else {
-		ui.NormilizeStatus(&c.Config[p], nextPath)
+		ui.updateStatus(cnf, nextPath)
 	}
 }
 
@@ -225,7 +225,7 @@ func (ui *UI) getSelectedPath(path *[]int, cnf *config.Config) bool {
 	return false
 }
 
-func (ui *UI) GetTermuiLists(c *config.Config) {
+func (ui *UI) updateRenderElements(c *config.Config) {
 	var item string
 	var width int
 	var x int
@@ -256,6 +256,7 @@ func (ui *UI) GetTermuiLists(c *config.Config) {
 		c = &c.Config[path]
 	}
 }
+
 
 func StringColor(text string, color string) string {
 	return "[" + text + "](" + color + ")"

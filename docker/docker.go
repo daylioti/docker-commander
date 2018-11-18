@@ -11,13 +11,14 @@ import (
 type Docker struct {
 	client         *client.Client
 	context        context.Context
-	containers     []types.Container
+	RunningTerminal *string
 	Terminals      []string
 	terminalsMap   map[string]int
+	terminalHeight int
 	updateTerminal fn
 }
 
-type fn func(*string)
+type fn func()
 
 func (d *Docker) Init(ui fn) {
 	var err error
@@ -27,27 +28,39 @@ func (d *Docker) Init(ui fn) {
 	// @Todo set version to settings.yml
 	d.client, err = client.NewClientWithOpts(client.WithVersion("1.38"))
 	if err != nil {
-		panic(err)
-	}
-	d.containers, err = d.client.ContainerList(d.context, types.ContainerListOptions{})
-	if err != nil {
-		panic(err)
+		panic("Docker not running.")
 	}
 	d.terminalsMap = make(map[string]int)
 }
 
+func (d *Docker) SetTerminalHeight(height int) {
+	d.terminalHeight = height
+}
+
 func (d *Docker) Exec(cmd string, path []int, container string) *string {
+	var terminal *string
+    terminal = d.getTerminal(path)
+	*terminal = "Execute -> "+cmd+"\n"
+	d.ChangeTerminal(path)
+	d.DockerCommandRun(cmd, container, terminal)
+	return terminal
+}
+
+func (d *Docker) ChangeTerminal(path []int) {
+	d.RunningTerminal = d.getTerminal(path)
+	d.updateTerminal()
+}
+
+func (d *Docker) getTerminal(path []int) *string {
 	var uuid string
 	for _, i := range path {
 		uuid += string(i)
 	}
 	uuid += "1" // Just avoid empty string.
 	if d.Terminals == nil || d.terminalsMap[uuid] == 0 {
-		d.Terminals = append(d.Terminals, "Execute -> "+cmd+"\n")
+		d.Terminals = append(d.Terminals, "")
 		d.terminalsMap[uuid] = len(d.Terminals)
 	}
-	d.updateTerminal(&d.Terminals[d.terminalsMap[uuid]-1])
-	d.DockerCommandRun(cmd, container, &d.Terminals[d.terminalsMap[uuid]-1])
 	return &d.Terminals[d.terminalsMap[uuid]-1]
 }
 
@@ -64,7 +77,7 @@ func (d *Docker) DockerCommandRun(command string, container string, terminal *st
 	Response, err = d.client.ContainerExecCreate(d.context, ContainerID, ExecConfig)
 	if err != nil {
 		*terminal += "Docker container from image " + container + " not running \n"
-		d.updateTerminal(terminal)
+		d.updateTerminal()
 		return
 	}
 	HResponse, err = d.client.ContainerExecAttach(d.context, Response.ID, types.ExecStartCheck{Tty: true})
@@ -73,33 +86,36 @@ func (d *Docker) DockerCommandRun(command string, container string, terminal *st
 	}
 	c = HResponse.Conn
 
-	var terminalSplit []string
 	go func() {
 		for {
-			terminalSplit = strings.Split(*terminal, "\n")
-			if len(terminalSplit) > 58 {
-				*terminal = strings.Join(terminalSplit[1:], "\n")
-			}
-			buf := make([]byte, 1024)
+			buf := make([]byte, 512)
 			_, err = c.Read(buf)
 			if err != nil {
 				_ = c.Close()
 				*terminal += "Finished -> " + command + "\n"
 				*terminal += "Close connection err: " + err.Error() + "\n"
-				d.updateTerminal(terminal)
+				d.updateTerminal()
 				return
 			} else {
 				*terminal += string(buf)
 			}
-
-			d.updateTerminal(terminal)
+			var text []string
+			var sliceTrim int
+			text = strings.Split(*terminal, "\n")
+			if len(text) > d.terminalHeight {
+				sliceTrim = len(text) - d.terminalHeight
+				text = append(text[:0], text[sliceTrim:]...)
+				*terminal = strings.Join(text, "\n")
+			}
+			d.updateTerminal()
 		}
 	}()
 	_ = d.client.ContainerExecStart(d.context, Response.ID, types.ExecStartCheck{Tty: true})
 }
 
 func (d *Docker) GetContainerId(name string) string {
-	for _, c := range d.containers {
+	containers, _ := d.client.ContainerList(d.context, types.ContainerListOptions{})
+	for _, c := range containers {
 		if strings.Contains(c.Image, name) {
 			return c.ID
 		}
