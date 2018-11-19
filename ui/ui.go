@@ -12,7 +12,7 @@ type UI struct {
 	terminal *termui.Par
 }
 
-func (ui *UI) Init() {
+func (ui *UI) Init(configPath string) {
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -20,7 +20,7 @@ func (ui *UI) Init() {
 
 	defer termui.Close()
 	ui.cnf = &config.Config{}
-	ui.cnf.Init("./config.yml")
+	ui.cnf.Init(configPath)
 	ui.cnf.Status = true
 	ui.cnf.Config[0].Selected = true
 	for i := 0; i < len(ui.cnf.Config); i++ {
