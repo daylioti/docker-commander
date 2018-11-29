@@ -10,6 +10,7 @@ type UI struct {
 	cnf      *config.Config
 	lists    []*termui.List
 	terminal *termui.Par
+	dockerClient *docker.Docker
 }
 
 func (ui *UI) Init(configPath string) {
@@ -21,28 +22,13 @@ func (ui *UI) Init(configPath string) {
 	defer termui.Close()
 	ui.cnf = &config.Config{}
 	ui.cnf.Init(configPath)
-	ui.cnf.Status = true
-	ui.cnf.Config[0].Selected = true
-	for i := 0; i < len(ui.cnf.Config); i++ {
-		ui.cnf.Config[i].Status = true
-	}
-	ui.cnf.Config[0].Status = true
-	if len(ui.cnf.Config[0].Config) > 0 {
-		for i := 0; i < len(ui.cnf.Config[0].Config); i++ {
-			ui.cnf.Config[0].Config[i].Status = true
-		}
-	}
 
-	dockerExecute := new(docker.Docker)
+	ui.dockerClient = &docker.Docker{}
 
-	updateTerminal := func() {
-		if ui.terminal != nil && ui.terminal.Text != *dockerExecute.RunningTerminal {
-			ui.terminal.Text = *dockerExecute.RunningTerminal
-			ui.TerminalRender()
-		}
-	}
+	// Connect to docker client can take some time
+	// so, do it in goroutine.
 	go func() {
-		dockerExecute.Init(updateTerminal)
+		ui.dockerClient.Init(ui.updateTerminal)
 	}()
 
 	ui.updateStatus(ui.cnf, ui.Path(ui.cnf))
@@ -56,35 +42,33 @@ func (ui *UI) Init(configPath string) {
 
 	termui.Handle("/sys/kbd/<up>", func(termui.Event) {
 		ui.changeSelected(0, -1, ui.cnf)
-		ui.Render(ui.cnf)
-		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<left>", func(termui.Event) {
 		ui.changeSelected(-1, 0, ui.cnf)
-		ui.Render(ui.cnf)
-		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<right>", func(termui.Event) {
 		ui.changeSelected(1, 0, ui.cnf)
-		ui.Render(ui.cnf)
-		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<down>", func(termui.Event) {
 		ui.changeSelected(0, 1, ui.cnf)
-		ui.Render(ui.cnf)
-		dockerExecute.ChangeTerminal(ui.Path(ui.cnf))
 	})
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
 		selected := ui.getSelected()
 		if selected.Command != "" {
 			ui.TerminalRender()
-			dockerExecute.SetTerminalHeight(ui.terminal.Height)
-			dockerExecute.Exec(selected.Command, ui.Path(ui.cnf), selected.Container)
+			ui.dockerClient.SetTerminalHeight(ui.terminal.Height)
+			ui.dockerClient.Exec(selected.Command, ui.Path(ui.cnf), selected.Container)
 
 		}
 	})
-
 	termui.Loop()
+}
+
+func (ui *UI) updateTerminal() {
+	if ui.terminal != nil && ui.terminal.Text != *ui.dockerClient.RunningTerminal {
+		ui.terminal.Text = *ui.dockerClient.RunningTerminal
+		ui.TerminalRender()
+	}
 }
 
 func (ui *UI) changeSelected(x int, y int, cnf *config.Config) {
@@ -126,6 +110,8 @@ func (ui *UI) changeSelected(x int, y int, cnf *config.Config) {
 		c.Selected = false
 		cu.Selected = true
 	}
+	ui.Render(ui.cnf)
+	ui.dockerClient.ChangeTerminal(ui.Path(ui.cnf))
 }
 
 func (ui *UI) getSelected() config.Config {
@@ -241,7 +227,7 @@ func (ui *UI) updateRenderElements(c *config.Config) {
             	width = len(cnf.Name)
 			}
         	if cnf.Selected == true {
-              item =  StringColor(cnf.Name, "fg-white,bg-green")
+              item = StringColor(cnf.Name, "fg-white,bg-green")
 			} else {
 				item = cnf.Name
 			}

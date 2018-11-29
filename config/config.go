@@ -20,10 +20,23 @@ type Config struct {
 func (cfg *Config) Init(path string) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		panic("Can't read file "+path+". Check file path or permissions.")
 	}
 	_ = yaml.Unmarshal(data, cfg)
 	cfg.ChildConfigsInsert(cfg)
+
+	// Set default config data.
+	cfg.Status = true
+	cfg.Config[0].Selected = true
+	for i := 0; i < len(cfg.Config); i++ {
+		cfg.Config[i].Status = true
+	}
+	cfg.Config[0].Status = true
+	if len(cfg.Config[0].Config) > 0 {
+		for i := 0; i < len(cfg.Config[0].Config); i++ {
+			cfg.Config[0].Config[i].Status = true
+		}
+	}
 }
 
 func (cfg *Config) ChildConfigsInsert(c *Config) {
