@@ -1,9 +1,11 @@
 package main
 
 import (
+	"docker-commander/docker"
 	"docker-commander/ui"
 	"flag"
 	"fmt"
+	"github.com/docker/docker/client"
 	"os"
 )
 
@@ -14,10 +16,13 @@ var (
 func main() {
 
 	var (
+		clientWithVersion = flag.String("api-v", "", "docker api version")
+		clientWithHost    = flag.String("api-host", "", "docker api host")
 		versionFlag     = flag.Bool("v", false, "output version information and exit")
 		helpFlag        = flag.Bool("h", false, "display this help dialog")
 	    configFileFlag  = flag.String("c", "", "path to yml config file, default - ./config.yml")
-	)
+	    )
+	var ops []func(*client.Client) error
 	flag.Parse()
 
 	if *versionFlag {
@@ -34,8 +39,19 @@ func main() {
 		*configFileFlag = "./config.yml"
 	}
 
+    dockerClient := &docker.Docker{}
+
+	if *clientWithVersion != "" {
+      	ops = append(ops, client.WithVersion(*clientWithVersion))
+	}
+
+    if *clientWithHost != "" {
+    	ops = append(ops, client.WithHost(*clientWithHost))
+	}
+	dockerClient.Init(ops...)
+
 	UI := new(ui.UI)
-	UI.Init(*configFileFlag)
+	UI.Init(*configFileFlag, dockerClient)
 }
 
 
