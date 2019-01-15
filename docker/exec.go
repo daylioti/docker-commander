@@ -95,8 +95,8 @@ func (e *Exec) commandRun(command string, container string, terminal *string) {
 			text = strings.Split(*terminal, "\n")
 			if len(text) > e.terminalHeight {
 				sliceTrim = len(text) - e.terminalHeight
-				text = append(text[:0], text[sliceTrim:]...)
-				*terminal = strings.Join(text, "\n")
+				//text = append(text[:0], text[sliceTrim:]...)
+				*terminal = strings.Join(text[sliceTrim+5:], "\n")
 			}
 			e.updateTerminal()
 		}

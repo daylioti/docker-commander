@@ -10,7 +10,7 @@ type Commands struct {
 	cnf      *config.Config
 	lists    []*termui.List
 	listCols []*termui.Row
-	terminal *termui.Par
+	terminal *termui.Paragraph
 	dockerClient *docker.Docker
 }
 
@@ -27,42 +27,38 @@ func (cmd *Commands) Init(configPath string, dockerClient *docker.Docker) {
 
 	cmd.Render(cmd.cnf)
 	termui.Clear()
-	termui.Handle("/sys/wnd/resize", func(termui.Event) {
+}
+
+func (cmd *Commands) Handle(key string) {
+	switch key {
+    case "<Up>":
+		cmd.changeSelected(0, -1, cmd.cnf)
+	   	break
+	case "<Left>":
+		cmd.changeSelected(-1, 0, cmd.cnf)
+		break
+	case "<Right>":
+		cmd.changeSelected(1, 0, cmd.cnf)
+		break
+	case "<Down>":
+		cmd.changeSelected(0, 1, cmd.cnf)
+		break
+	case "<Enter>":
+		termui.Body.Rows[2] = termui.NewRow(termui.NewCol(12, 0, cmd.terminal))
+			selected := cmd.getSelected()
+			if selected.Command != "" {
+				cmd.TerminalRender()
+				cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
+				cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
+			}
+		break
+	case "<Resize>":
 		cmd.updateRenderElements(cmd.cnf)
 		termui.Body.Width = termui.TermWidth()
 		termui.Body.Align()
 		termui.Clear()  // Delete this line to avoid the crash
 		termui.Render(termui.Body)
-	})
-}
-
-func (cmd *Commands) Handle(key string) {
-	switch key {
-    	case "/sys/kbd/<up>":
-			cmd.changeSelected(0, -1, cmd.cnf)
-	    	break
-		case "/sys/kbd/<left>":
-			cmd.changeSelected(-1, 0, cmd.cnf)
-			break
-		case "/sys/kbd/<right>":
-			cmd.changeSelected(1, 0, cmd.cnf)
-			break
-		case "/sys/kbd/<down>":
-			cmd.changeSelected(0, 1, cmd.cnf)
-			break
-		case "/sys/kbd/<enter>":
-			termui.Body.Rows[2] = termui.NewRow(termui.NewCol(12, 0, cmd.terminal))
-				selected := cmd.getSelected()
-				if selected.Command != "" {
-					cmd.TerminalRender()
-					cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
-					cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
-
-				}
-			break
-	    case "/sys/kbd/q":
-			termui.StopLoop()
-	    	break
+		break
 	}
 }
 
@@ -76,8 +72,6 @@ func (cmd *Commands) updateTerminal() {
 		cmd.TerminalRender()
 	}
 }
-
-
 
 func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	path := cmd.Path(cmd.cnf)
@@ -123,9 +117,6 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 }
 
 
-
-
-
 func (cmd *Commands) getSelected() config.Config {
 	var c *config.Config
 	c = cmd.cnf
@@ -145,7 +136,7 @@ func (cmd *Commands) Render(cnf *config.Config) {
 
 func (cmd *Commands) TerminalRender() {
 	if cmd.terminal == nil {
-		cmd.terminal = termui.NewPar("")
+		cmd.terminal = termui.NewParagraph("")
 	}
 	var h int
 	for i := 0; i < len(cmd.lists); i++ {

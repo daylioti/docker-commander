@@ -6,11 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/docker/docker/client"
+	"github.com/gizak/termui"
 	"os"
 )
 
 var (
-	version = "1.0.2"
+	version = "1.0.3"
 )
 
 func main() {
@@ -18,9 +19,9 @@ func main() {
 	var (
 		clientWithVersion = flag.String("api-v", "", "docker api version")
 		clientWithHost    = flag.String("api-host", "", "docker api host")
-		versionFlag     = flag.Bool("v", false, "output version information and exit")
-		helpFlag        = flag.Bool("h", false, "display this help dialog")
-	    configFileFlag  = flag.String("c", "", "path to yml config file, default - ./config.yml")
+		versionFlag       = flag.Bool("v", false, "output version information and exit")
+		helpFlag          = flag.Bool("h", false, "display this help dialog")
+	    configFileFlag    = flag.String("c", "", "path to yml config file, default - ./config.yml")
 	    )
 	var ops []func(*client.Client) error
 	flag.Parse()
@@ -48,10 +49,29 @@ func main() {
     if *clientWithHost != "" {
     	ops = append(ops, client.WithHost(*clientWithHost))
 	}
+	err := termui.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer termui.Close()
+
 	dockerClient.Init(ops...)
 
 	UI := new(ui.UI)
 	UI.Init(*configFileFlag, dockerClient)
+
+	uiEvents := termui.PollEvents()
+	for {
+		select {
+		case e := <-uiEvents:
+			switch e.ID {
+			case "q", "<C-c>":
+				return
+			default:
+				UI.Cmd.Handle(e.ID)
+			}
+		}
+	}
 }
 
 
