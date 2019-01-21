@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"docker-commander/config"
-	"docker-commander/docker"
+	"github.com/daylioti/docker-commander/config"
+	"github.com/daylioti/docker-commander/docker"
 	"github.com/gizak/termui"
 )
 

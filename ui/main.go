@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"docker-commander/docker"
+	"github.com/daylioti/docker-commander/docker"
 	"github.com/gizak/termui"
 )
 

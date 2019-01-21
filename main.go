@@ -1,10 +1,10 @@
 package main
 
 import (
-	"docker-commander/docker"
-	"docker-commander/ui"
 	"flag"
 	"fmt"
+	"github.com/daylioti/docker-commander/docker"
+	"github.com/daylioti/docker-commander/ui"
 	"github.com/docker/docker/client"
 	"github.com/gizak/termui"
 	"os"
