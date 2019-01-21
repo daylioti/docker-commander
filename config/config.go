@@ -20,7 +20,7 @@ type Config struct {
 func (cfg *Config) Init(path string) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic("Can't read file "+path+". Check file path or permissions.")
+		panic("Can't read file " + path + ". Check file path or permissions.")
 	}
 	_ = yaml.Unmarshal(data, cfg)
 	cfg.ChildConfigsInsert(cfg)

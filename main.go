@@ -21,8 +21,8 @@ func main() {
 		clientWithHost    = flag.String("api-host", "", "docker api host")
 		versionFlag       = flag.Bool("v", false, "output version information and exit")
 		helpFlag          = flag.Bool("h", false, "display this help dialog")
-	    configFileFlag    = flag.String("c", "", "path to yml config file, default - ./config.yml")
-	    )
+		configFileFlag    = flag.String("c", "", "path to yml config file, default - ./config.yml")
+	)
 	var ops []func(*client.Client) error
 	flag.Parse()
 
@@ -40,14 +40,14 @@ func main() {
 		*configFileFlag = "./config.yml"
 	}
 
-    dockerClient := &docker.Docker{}
+	dockerClient := &docker.Docker{}
 
 	if *clientWithVersion != "" {
-      	ops = append(ops, client.WithVersion(*clientWithVersion))
+		ops = append(ops, client.WithVersion(*clientWithVersion))
 	}
 
-    if *clientWithHost != "" {
-    	ops = append(ops, client.WithHost(*clientWithHost))
+	if *clientWithHost != "" {
+		ops = append(ops, client.WithHost(*clientWithHost))
 	}
 	err := termui.Init()
 	if err != nil {
@@ -73,7 +73,6 @@ func main() {
 		}
 	}
 }
-
 
 var help = `docker-commander - execute commands in docker containers
 usage: docker-commander [options]

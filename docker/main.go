@@ -6,9 +6,9 @@ import (
 )
 
 type Docker struct {
-	client *client.Client
+	client  *client.Client
 	context context.Context
-	Exec *Exec
+	Exec    *Exec
 }
 
 func (d *Docker) Init(ops ...func(*client.Client) error) {
@@ -22,6 +22,3 @@ func (d *Docker) Init(ops ...func(*client.Client) error) {
 	d.Exec = &Exec{}
 	d.Exec.Init(d)
 }
-
-
-

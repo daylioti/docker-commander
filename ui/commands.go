@@ -7,10 +7,10 @@ import (
 )
 
 type Commands struct {
-	cnf      *config.Config
-	lists    []*termui.List
-	listCols []*termui.Row
-	terminal *termui.Paragraph
+	cnf          *config.Config
+	lists        []*termui.List
+	listCols     []*termui.Row
+	terminal     *termui.Paragraph
 	dockerClient *docker.Docker
 }
 
@@ -31,9 +31,9 @@ func (cmd *Commands) Init(configPath string, dockerClient *docker.Docker) {
 
 func (cmd *Commands) Handle(key string) {
 	switch key {
-    case "<Up>":
+	case "<Up>":
 		cmd.changeSelected(0, -1, cmd.cnf)
-	   	break
+		break
 	case "<Left>":
 		cmd.changeSelected(-1, 0, cmd.cnf)
 		break
@@ -45,18 +45,18 @@ func (cmd *Commands) Handle(key string) {
 		break
 	case "<Enter>":
 		termui.Body.Rows[2] = termui.NewRow(termui.NewCol(12, 0, cmd.terminal))
-			selected := cmd.getSelected()
-			if selected.Command != "" {
-				cmd.TerminalRender()
-				cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
-				cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
-			}
+		selected := cmd.getSelected()
+		if selected.Command != "" {
+			cmd.TerminalRender()
+			cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
+			cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
+		}
 		break
 	case "<Resize>":
 		cmd.updateRenderElements(cmd.cnf)
 		termui.Body.Width = termui.TermWidth()
 		termui.Body.Align()
-		termui.Clear()  // Delete this line to avoid the crash
+		termui.Clear() // Delete this line to avoid the crash
 		termui.Render(termui.Body)
 		break
 	}
@@ -115,7 +115,6 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	cmd.Render(cmd.cnf)
 	cmd.dockerClient.Exec.ChangeTerminal(cmd.Path(cmd.cnf))
 }
-
 
 func (cmd *Commands) getSelected() config.Config {
 	var c *config.Config
@@ -256,9 +255,7 @@ func (cmd *Commands) updateRenderElements(c *config.Config) {
 func (cmd *Commands) getSpan(maxTextLength int) int {
 	oneColumn := termui.TermWidth() / 12
 	if oneColumn < maxTextLength && oneColumn != 0 {
-		return int(maxTextLength / oneColumn) + 1
+		return int(maxTextLength/oneColumn) + 1
 	}
 	return 1
 }
-
-

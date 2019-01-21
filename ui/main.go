@@ -6,18 +6,16 @@ import (
 )
 
 type UI struct {
-	Cmd      *Commands
+	Cmd *Commands
 }
 
 func (ui *UI) Init(configPath string, dockerClient *docker.Docker) {
-
 
 	termui.Body.AddRows(
 		termui.NewRow(),
 		termui.NewRow(),
 		termui.NewRow(),
 	)
-
 
 	ui.Cmd = &Commands{}
 	ui.Cmd.Init(configPath, dockerClient)

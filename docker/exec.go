@@ -7,12 +7,12 @@ import (
 )
 
 type Exec struct {
-	dockerClient *Docker
+	dockerClient    *Docker
 	RunningTerminal *string
-	Terminals      []string
-	terminalsMap   map[string]int
-	terminalHeight int
-	updateTerminal fn
+	Terminals       []string
+	terminalsMap    map[string]int
+	terminalHeight  int
+	updateTerminal  fn
 }
 type fn func()
 
@@ -32,7 +32,7 @@ func (e *Exec) SetTerminalHeight(height int) {
 func (e *Exec) CommandExecute(cmd string, path []int, container string) *string {
 	var terminal *string
 	terminal = e.getTerminal(path)
-	*terminal = "Execute -> "+cmd+"\n"
+	*terminal = "Execute -> " + cmd + "\n"
 	e.ChangeTerminal(path)
 	e.commandRun(cmd, container, terminal)
 	return terminal
