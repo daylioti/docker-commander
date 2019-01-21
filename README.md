@@ -6,7 +6,7 @@
 <h2>Installation</h2>
 
 ```bash
-sudo wget https://github.com/daylioti/docker-commander/releases/download/1.0.2/docker-commander-linux-amd64 -O /usr/local/bin/docker-commander
+sudo wget https://github.com/daylioti/docker-commander/releases/download/1.0.3/docker-commander_linux_amd64 -O /usr/local/bin/docker-commander
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
