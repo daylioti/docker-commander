@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/daylioti/docker-commander/config"
 	"github.com/daylioti/docker-commander/docker"
 	"github.com/daylioti/docker-commander/ui"
 	"github.com/docker/docker/client"
@@ -49,6 +50,10 @@ func main() {
 	if *clientWithHost != "" {
 		ops = append(ops, client.WithHost(*clientWithHost))
 	}
+
+	Cnf := &config.Config{}
+	Cnf.Init(*configFileFlag)
+
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -58,7 +63,7 @@ func main() {
 	dockerClient.Init(ops...)
 
 	UI := new(ui.UI)
-	UI.Init(*configFileFlag, dockerClient)
+	UI.Init(Cnf, dockerClient)
 
 	uiEvents := termui.PollEvents()
 	for {

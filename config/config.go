@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
 	"strings"
 )
 
@@ -20,7 +21,7 @@ type Config struct {
 func (cfg *Config) Init(path string) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic("Can't read file " + path + ". Check file path or permissions.")
+		log.Fatal("Can't read file " + path + ". Check file path or permissions.")
 	}
 	_ = yaml.Unmarshal(data, cfg)
 	cfg.ChildConfigsInsert(cfg)

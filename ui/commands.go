@@ -14,9 +14,8 @@ type Commands struct {
 	dockerClient *docker.Docker
 }
 
-func (cmd *Commands) Init(configPath string, dockerClient *docker.Docker) {
-	cmd.cnf = &config.Config{}
-	cmd.cnf.Init(configPath)
+func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker) {
+	cmd.cnf = cnf
 	cmd.dockerClient = dockerClient
 
 	cmd.dockerClient.Exec.SetTerminalUpdateFn(cmd.updateTerminal)
