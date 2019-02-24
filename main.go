@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	version = "1.0.3"
+	version = "1.0.4"
 )
 
 func main() {
@@ -70,8 +70,14 @@ func main() {
 		select {
 		case e := <-uiEvents:
 			switch e.ID {
-			case "q", "<C-c>":
+			case "q", "<C-c>", "Q":
 				return
+			case "<Resize>":
+				payload := e.Payload.(termui.Resize)
+				UI.Grid.SetRect(0, 0, payload.Width, payload.Height)
+				termui.Clear()
+				UI.Cmd.UpdateRenderElements(Cnf)
+				termui.Render(UI.Grid)
 			default:
 				UI.Cmd.Handle(e.ID)
 			}

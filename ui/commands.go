@@ -4,59 +4,70 @@ import (
 	"github.com/daylioti/docker-commander/config"
 	"github.com/daylioti/docker-commander/docker"
 	"github.com/gizak/termui"
+	"github.com/gizak/termui/widgets"
+	"math"
 )
 
 type Commands struct {
+	ui           *UI
 	cnf          *config.Config
-	lists        []*termui.List
-	listCols     []*termui.Row
-	terminal     *termui.Paragraph
+	lists        []*widgets.List
+	listCols     []interface{}
+	terminal     *widgets.List
 	dockerClient *docker.Docker
 }
 
-func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker) {
+func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker, ui *UI) {
 	cmd.cnf = cnf
 	cmd.dockerClient = dockerClient
+	cmd.ui = ui
 
 	cmd.dockerClient.Exec.SetTerminalUpdateFn(cmd.updateTerminal)
-
 	cmd.updateStatus(cmd.cnf, cmd.Path(cmd.cnf))
 
 	cmd.TerminalRender()
-
 	cmd.Render(cmd.cnf)
 	termui.Clear()
+
 }
 
 func (cmd *Commands) Handle(key string) {
 	switch key {
-	case "<Up>":
+	case "<Tab>":
+		if cmd.ui.SelectedRow >= len(cmd.ui.Grid.Items) {
+			cmd.ui.SelectedRow++
+		} else {
+			cmd.ui.SelectedRow = 0
+		}
+		cmd.Render(cmd.cnf)
+		cmd.TerminalRender()
+	case "<Up>", "K", "k":
 		cmd.changeSelected(0, -1, cmd.cnf)
 		break
-	case "<Left>":
+	case "<Left>", "H", "h":
 		cmd.changeSelected(-1, 0, cmd.cnf)
 		break
-	case "<Right>":
+	case "<Right>", "L", "l":
 		cmd.changeSelected(1, 0, cmd.cnf)
 		break
-	case "<Down>":
+	case "<Down>", "J", "j":
 		cmd.changeSelected(0, 1, cmd.cnf)
 		break
 	case "<Enter>":
-		termui.Body.Rows[2] = termui.NewRow(termui.NewCol(12, 0, cmd.terminal))
+		cmd.ui.Grid.Items[1].Entry = termui.NewCol(1.0, cmd.terminal)
 		selected := cmd.getSelected()
 		if selected.Command != "" {
 			cmd.TerminalRender()
-			cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
+			//cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Dy())
 			cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
 		}
-		break
-	case "<Resize>":
-		cmd.updateRenderElements(cmd.cnf)
-		termui.Body.Width = termui.TermWidth()
-		termui.Body.Align()
-		termui.Clear() // Delete this line to avoid the crash
-		termui.Render(termui.Body)
+		//termui.Body.Rows[2] = termui.NewRow(termui.NewCol(12, 0, cmd.terminal))
+		//selected := cmd.getSelected()
+		//if selected.Command != "" {
+		//	cmd.TerminalRender()
+		//	cmd.dockerClient.Exec.SetTerminalHeight(cmd.terminal.Height)
+		//	cmd.dockerClient.Exec.CommandExecute(selected.Command, cmd.Path(cmd.cnf), selected.Container)
+		//}
 		break
 	}
 }
@@ -66,13 +77,16 @@ func (cmd *Commands) SetDockerClient(client *docker.Docker) {
 }
 
 func (cmd *Commands) updateTerminal() {
-	if cmd.terminal != nil && cmd.terminal.Text != *cmd.dockerClient.Exec.RunningTerminal {
-		cmd.terminal.Text = *cmd.dockerClient.Exec.RunningTerminal
+	if cmd.terminal != nil && len(cmd.terminal.Rows) != len(*cmd.dockerClient.Exec.RunningTerminal) {
+		cmd.terminal.Rows = *cmd.dockerClient.Exec.RunningTerminal
 		cmd.TerminalRender()
 	}
 }
 
 func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
+	if cmd.ui.SelectedRow != 0 {
+		return
+	}
 	path := cmd.Path(cmd.cnf)
 	var c *config.Config
 	var cp *config.Config
@@ -126,36 +140,41 @@ func (cmd *Commands) getSelected() config.Config {
 
 func (cmd *Commands) Render(cnf *config.Config) {
 	cmd.preRender(cnf)
-	cmd.updateRenderElements(cnf)
+	cmd.UpdateRenderElements(cnf)
 	termui.Clear()
-	termui.Body.Align()
-	termui.Render(termui.Body)
+	termui.Render(cmd.ui.Grid)
 }
 
 func (cmd *Commands) TerminalRender() {
 	if cmd.terminal == nil {
-		cmd.terminal = termui.NewParagraph("")
+		cmd.terminal = widgets.NewList()
+		cmd.terminal.WrapText = false
 	}
-	var h int
-	for i := 0; i < len(cmd.lists); i++ {
-		if cmd.lists[i].Height > h {
-			h = cmd.lists[i].Height
-		}
+	if cmd.ui.SelectedRow == 1 {
+		cmd.terminal.BorderStyle = termui.NewStyle(termui.ColorGreen)
 	}
-	cmd.terminal.Width = termui.Body.Width
-	cmd.terminal.Y = h
-	cmd.terminal.Height = termui.TermHeight() - h
-	termui.Render(termui.Body)
+
+	//var h int
+	//for i := 0; i < len(cmd.lists); i++ {
+	//if cmd.lists[i].Max > h {
+	//	h = cmd.lists[i].Max
+	//}
+	//if cmd.lists[i].Height > h {
+	//	h = cmd.lists[i].Height
+	//}
+	//}
+	//cmd.terminal.Width = termui.Body.Width
+	//cmd.terminal.Y = h
+	//cmd.terminal.Height = termui.TermHeight() - h
+	cmd.Render(cmd.cnf)
 }
 
 func (cmd *Commands) preRender(cnf *config.Config) {
-	var path []int
-	path = cmd.Path(cnf)
-
-	cmd.resetStatus(cnf)
-	cmd.updateStatus(cnf, path)
+	//cmd.resetStatus(cnf)
+	cmd.updateStatus(cnf, cmd.Path(cnf))
 }
 
+// Get array with path to selected item.
 func (cmd *Commands) Path(cnf *config.Config) []int {
 	var path []int
 	var p []int
@@ -168,6 +187,7 @@ func (cmd *Commands) Path(cnf *config.Config) []int {
 	return p
 }
 
+// Update Status (display flag) prop in commands structure, depends on current selected item.
 func (cmd *Commands) updateStatus(cnf *config.Config, path []int) {
 	if len(path) == 0 {
 		return
@@ -188,6 +208,7 @@ func (cmd *Commands) updateStatus(cnf *config.Config, path []int) {
 	}
 }
 
+// Clean all Selected and Status props in commands structure.
 func (cmd *Commands) resetStatus(cnf *config.Config) {
 	cnf.Selected = false
 	cnf.Status = false
@@ -198,6 +219,7 @@ func (cmd *Commands) resetStatus(cnf *config.Config) {
 	}
 }
 
+// Get selected item path via int array
 func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 	if cnf.Selected == true {
 		return true
@@ -211,10 +233,9 @@ func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 	return false
 }
 
-func (cmd *Commands) updateRenderElements(c *config.Config) {
-	var item string
+func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 	var width int
-	var x int
+	var height int
 	path := append(cmd.Path(cmd.cnf), 0)
 	cmd.lists = nil
 	cmd.listCols = nil
@@ -223,38 +244,41 @@ func (cmd *Commands) updateRenderElements(c *config.Config) {
 			break
 		}
 		width = 0
-		cmd.lists = append(cmd.lists, termui.NewList())
+		cmd.lists = append(cmd.lists, widgets.NewList())
+		cmd.lists[i].SelectedRow = 0
 		for p, cnf := range c.Config {
+			if cnf.Selected == true {
+				if cmd.ui.SelectedRow == 0 {
+					cmd.lists[i].BorderStyle = termui.NewStyle(termui.ColorGreen)
+				}
+				cmd.lists[i].SelectedRow = uint(len(cmd.lists[i].Rows))
+				cmd.lists[i].SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+			} else if cnf.Selected == false && len(path) > i && pathIndex == p && i < len(path)-1 {
+				cmd.lists[i].SelectedRow = uint(len(cmd.lists[i].Rows))
+				cmd.lists[i].SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
+			}
+			cmd.lists[i].Rows = append(cmd.lists[i].Rows, cnf.Name)
 			if len(cnf.Name) > width {
 				width = len(cnf.Name)
 			}
-			if cnf.Selected == true {
-				item = StringColor(cnf.Name, "fg-white,bg-green")
-			} else {
-				if len(path) > i && pathIndex == p && i < len(path)-1 {
-					item = StringColor(cnf.Name, "fg-green")
-				} else {
-					item = cnf.Name
-				}
+			if len(cmd.lists[i].Rows) > height {
+				height = len(cmd.lists[i].Rows)
 			}
-			cmd.lists[i].Items = append(cmd.lists[i].Items, item)
 		}
-
-		cmd.lists[i].Height = len(cmd.lists[i].Items) + 2
-		cmd.lists[i].Width = width + 3
-		cmd.lists[i].X = x
-		x += cmd.lists[i].Width
-
+		termui.TerminalDimensions()
 		c = &c.Config[pathIndex]
-		cmd.listCols = append(cmd.listCols, termui.NewCol(cmd.getSpan(cmd.lists[i].Width), 0, cmd.lists[i]))
+		cmd.listCols = append(cmd.listCols, termui.NewCol(cmd.getMenuColumnRatio(width), cmd.lists[i]))
 	}
-	termui.Body.Rows[0] = termui.NewRow(cmd.listCols...)
+	cmd.ui.Grid = termui.NewGrid()
+	termWidth, termHeight := termui.TerminalDimensions()
+	cmd.ui.Grid.SetRect(0, 0, termWidth, termHeight)
+	cmd.ui.Grid.Set(
+		termui.NewRow(0.2, cmd.listCols...),
+		termui.NewRow(0.8, cmd.terminal),
+	)
 }
 
-func (cmd *Commands) getSpan(maxTextLength int) int {
-	oneColumn := termui.TermWidth() / 12
-	if oneColumn < maxTextLength && oneColumn != 0 {
-		return int(maxTextLength/oneColumn) + 1
-	}
-	return 1
+func (cmd *Commands) getMenuColumnRatio(maxTextLength int) float64 {
+	width, _ := termui.TerminalDimensions()
+	return math.Floor(float64(maxTextLength/(width/100))) / 100
 }

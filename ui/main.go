@@ -7,19 +7,18 @@ import (
 )
 
 type UI struct {
-	Cmd *Commands
+	Cmd         *Commands
+	Grid        *termui.Grid
+	SelectedRow int
 }
 
 func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker) {
-
-	termui.Body.AddRows(
-		termui.NewRow(),
-		termui.NewRow(),
-		termui.NewRow(),
-	)
-
+	ui.Grid = termui.NewGrid()
+	termWidth, termHeight := termui.TerminalDimensions()
+	ui.Grid.SetRect(0, 0, termWidth, termHeight)
+	ui.SelectedRow = 0
 	ui.Cmd = &Commands{}
-	ui.Cmd.Init(cnf, dockerClient)
+	ui.Cmd.Init(cnf, dockerClient, ui)
 }
 
 func StringColor(text string, color string) string {
