@@ -1,10 +1,8 @@
 package config
 
 import (
-	"github.com/jinzhu/copier"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"strings"
 )
 
@@ -13,18 +11,34 @@ type Config struct {
 	Selected     bool     // Selected config or not
 	Status       bool     // Display or not
 	Config       []Config `yaml:"config"`        // Sub-configs (recursive)
-	Command      string   `yaml:"command"`       // bash command
-	Container    string   `yaml:"container"`     // The name of the image from which the container is made
-	ChildConfigs []Config `yaml:"child_configs"` // Able to insert insert configs structure into child configs.
+	Exec         ExecConfig `yaml:"exec"`  // Docker exec config.
+	Placeholders map[string]string `yaml:"placeholders"`
 }
+
+type ExecConfig struct {
+	Connect ExecConnect `yaml:"connect"`
+	Env []string      `yaml:"env"`        // Environment variables.
+	WorkingDir string `yaml:"workdir"`    // Working directory.
+	Cmd string      `yaml:"cmd"`        // Execution commands and args
+}
+
+type ExecConnect struct {
+	FromImage string  `yaml:"container_image"` // The name of the image from which the container is made.
+	ContainerName string `yaml:"container_name"`    // Container Name
+	ContainerId string `yaml:"container_id"`// Container id
+}
+
 
 func (cfg *Config) Init(path string) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal("Can't read file " + path + ". Check file path or permissions.")
+		panic(err)
 	}
-	_ = yaml.Unmarshal(data, cfg)
-	cfg.ChildConfigsInsert(cfg)
+	err = yaml.Unmarshal(data, cfg)
+	if err != nil {
+		panic(err)
+	}
+	cfg.ChildConfigsPlaceholders(make(map[string]string), cfg)
 
 	// Set default config data.
 	cfg.Status = true
@@ -40,36 +54,28 @@ func (cfg *Config) Init(path string) {
 	}
 }
 
-func (cfg *Config) ChildConfigsInsert(c *Config) {
-	var i int
-	var name string
-	var replace Config
-	if c.Config != nil {
-		for i = 0; i < len(c.Config); i++ {
-			cfg.ChildConfigsInsert(&c.Config[i])
+func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *Config) map[string]string {
+	for i:=0;i<len(c.Config);i++ {
+		for k, v := range c.Placeholders {
+			placeholders[k] = v
 		}
-	}
-	if c.ChildConfigs != nil {
-		for i = 0; i < len(c.Config); i++ {
-			for j := 0; j < len(c.ChildConfigs); j++ {
-				name = c.Config[i].Name
-				replace = cfg.ChildConfigsPlaceholders(name, c.ChildConfigs[j])
-				c.Config[i].Config = append(c.Config[i].Config, replace)
-			}
+		for key, value := range placeholders {
+          cfg.replacePlaceholder(key, value, &c.Config[i])
 		}
+		cfg.ChildConfigsPlaceholders(placeholders, &c.Config[i])
 	}
+	return placeholders
 }
 
-func (cfg *Config) ChildConfigsPlaceholders(name string, c Config) Config {
-	config := Config{}
-	_ = copier.Copy(config, c)
-	if c.Config != nil {
-		for i := 0; i < len(c.Config); i++ {
-			config.Config = append(config.Config, cfg.ChildConfigsPlaceholders(name, c.Config[i]))
-		}
+func (cfg *Config) replacePlaceholder(placeholder string, value string, c *Config) {
+	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, 1)
+	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, 1)
+	c.Exec.Connect.ContainerId = strings.Replace(c.Exec.Connect.ContainerId, "@"+placeholder, value, 1)
+	c.Exec.Cmd = strings.Replace(c.Exec.Cmd, "@"+placeholder, value, 1)
+	for i:=0;i<len(c.Exec.Env);i++ {
+		c.Exec.Env[i] = strings.Replace(c.Exec.Env[i], "@"+placeholder, value, 1)
 	}
-	config.Name = strings.Replace(c.Name, "@parent", name, 1)
-	config.Command = strings.Replace(c.Command, "@parent", name, 1)
-	config.Container = c.Container
-	return config
+	for k, v := range c.Placeholders {
+      c.Placeholders[k] =  strings.Replace(v, "@"+placeholder, value, 1)
+	}
 }

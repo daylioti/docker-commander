@@ -1,5 +1,7 @@
 ---
 
+# docker run -it -d ubuntu
+
 config:
   - name: "group 1"
     config:

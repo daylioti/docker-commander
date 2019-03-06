@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	version = "1.0.4"
+	version = "1.1.0"
 )
 
 func main() {
@@ -26,6 +26,8 @@ func main() {
 	)
 	var ops []func(*client.Client) error
 	flag.Parse()
+	*configFileFlag = "/home/daylioti/jysk/j2/config2.yml"
+
 
 	if *versionFlag {
 		fmt.Println(version)
@@ -40,9 +42,11 @@ func main() {
 	if *configFileFlag == "" {
 		*configFileFlag = "./config.yml"
 	}
-
+	*configFileFlag = "/home/daylioti/jysk/j2/config2.yml"
 	dockerClient := &docker.Docker{}
 
+	Cnf := &config.Config{}
+	Cnf.Init(*configFileFlag)
 	if *clientWithVersion != "" {
 		ops = append(ops, client.WithVersion(*clientWithVersion))
 	}
@@ -51,8 +55,6 @@ func main() {
 		ops = append(ops, client.WithHost(*clientWithHost))
 	}
 
-	Cnf := &config.Config{}
-	Cnf.Init(*configFileFlag)
 
 	err := termui.Init()
 	if err != nil {
@@ -75,11 +77,9 @@ func main() {
 			case "<Resize>":
 				payload := e.Payload.(termui.Resize)
 				UI.Grid.SetRect(0, 0, payload.Width, payload.Height)
-				termui.Clear()
-				UI.Cmd.UpdateRenderElements(Cnf)
-				termui.Render(UI.Grid)
+				UI.Render()
 			default:
-				UI.Cmd.Handle(e.ID)
+				UI.Handle(e.ID)
 			}
 		}
 	}
