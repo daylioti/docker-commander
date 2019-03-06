@@ -42,7 +42,6 @@ func main() {
 	if *configFileFlag == "" {
 		*configFileFlag = "./config.yml"
 	}
-	*configFileFlag = "/home/daylioti/jysk/j2/config2.yml"
 	dockerClient := &docker.Docker{}
 
 	Cnf := &config.Config{}
