@@ -16,8 +16,9 @@ func (d *Docker) Init(ops ...func(*client.Client) error) {
 	d.context = context.Background()
 	defer d.context.Done()
 	d.client, err = client.NewClientWithOpts(ops...)
+
 	if err != nil {
-		panic("Docker not running.")
+		panic(err)
 	}
 	d.Exec = &Exec{}
 	d.Exec.Init(d)

@@ -7,7 +7,7 @@ import (
 	"github.com/daylioti/docker-commander/docker"
 	"github.com/daylioti/docker-commander/ui"
 	"github.com/docker/docker/client"
-	"github.com/gizak/termui"
+	"github.com/gizak/termui/v3"
 	"os"
 )
 
@@ -22,12 +22,10 @@ func main() {
 		clientWithHost    = flag.String("api-host", "", "docker api host")
 		versionFlag       = flag.Bool("v", false, "output version information and exit")
 		helpFlag          = flag.Bool("h", false, "display this help dialog")
-		configFileFlag    = flag.String("c", "", "path to yml config file, default - ./config.yml")
+		configFileFlag    = flag.String("c", "", "system path to yml config file or url, default - ./config.yml")
 	)
 	var ops []func(*client.Client) error
 	flag.Parse()
-	*configFileFlag = "/home/daylioti/jysk/j2/config2.yml"
-
 
 	if *versionFlag {
 		fmt.Println(version)
@@ -48,13 +46,13 @@ func main() {
 	Cnf.Init(*configFileFlag)
 	if *clientWithVersion != "" {
 		ops = append(ops, client.WithVersion(*clientWithVersion))
+	} else {
+		ops = append(ops, client.WithVersion("1.39"))
 	}
 
 	if *clientWithHost != "" {
 		ops = append(ops, client.WithHost(*clientWithHost))
 	}
-
-
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -67,19 +65,17 @@ func main() {
 	UI.Init(Cnf, dockerClient)
 
 	uiEvents := termui.PollEvents()
-	for {
-		select {
-		case e := <-uiEvents:
-			switch e.ID {
-			case "q", "<C-c>", "Q":
-				return
-			case "<Resize>":
-				payload := e.Payload.(termui.Resize)
-				UI.Grid.SetRect(0, 0, payload.Width, payload.Height)
-				UI.Render()
-			default:
-				UI.Handle(e.ID)
-			}
+	for e := range uiEvents {
+		switch e.ID {
+		case "q", "<C-c>", "Q":
+			return
+		case "<Resize>":
+			payload := e.Payload.(termui.Resize)
+			UI.Grid.SetRect(0, 0, payload.Width, payload.Height)
+			UI.Cmd.UpdateRenderElements(Cnf)
+			UI.Render()
+		default:
+			UI.Handle(e.ID)
 		}
 	}
 }

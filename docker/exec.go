@@ -1,99 +1,66 @@
 package docker
 
 import (
+	"github.com/daylioti/docker-commander/config"
+	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/docker/docker/api/types"
+	"github.com/gizak/termui/v3/widgets"
 	"net"
 	"strings"
 )
 
 type Exec struct {
-	dockerClient    *Docker
-	//RunningTerminal *[]string
-	Terminals       []*TerminalRun
-	//terminalsMap    map[string]int
-	//terminalHeight  int
-	updateTerminal  fn
+	dockerClient   *Docker
+	Terminals      []*TerminalRun
+	updateTerminal fn
 }
-
 
 type TerminalRun struct {
-	Command string
-	Running bool
-	ContainerName string
-	ContainerId string
-	FromImage string
-	Output []string
-	Id string
+	TabItem     commanderWidgets.TabItem // tab item text and styles
+	List        *widgets.List            // list widget with command output
+	Active      bool                     // opened tab or not
+	Command     string
+	Running     bool
+	ContainerID string
+	ID          string // based on selected item path in menu
+	Name        string
+	WorkDir     string
 }
 
-
-type fn func()
+type fn func(string, bool)
 
 func (e *Exec) Init(dockerClient *Docker) {
 	e.dockerClient = dockerClient
-	//e.terminalsMap = make(map[string]int)
 }
 
 func (e *Exec) SetTerminalUpdateFn(ui fn) {
 	e.updateTerminal = ui
 }
-//
-//func (e *Exec) SetTerminalHeight(height int) {
-//	e.terminalHeight = height
-//}
 
-
-func (e *Exec) CommandExecute(term *TerminalRun) {
-
-	//go func() {
-
-	//}
-}
-
-//func (e *Exec) CommandExecute(cmd string, path []int, container string) *[]string {
-//	var terminal *[]string
-//	//terminal = e.getTerminal(path)
-//	*terminal = append(*terminal, "Execute -> "+cmd)
-//	//e.ChangeTerminal(path)
-//	e.commandRun(cmd, container, terminal)
-//	return terminal
-//}
-
-func (e *Exec) ChangeTerminal(id string) {
-	//e.RunningTerminal = e.getTerminal(path)
-	e.updateTerminal()
-}
-//
-//func (e *Exec) getTerminal(path []int) *[]string {
-//	var uuid string
-//	for _, i := range path {
-//		uuid += string(i)
-//	}
-//	uuid += "1" // Just avoid empty string.
-//	//if e.Terminals == nil || e.terminalsMap[uuid] == 0 {
-//	//	e.Terminals = append(e.Terminals, []string{})
-//	//	e.terminalsMap[uuid] = len(e.Terminals)
-//	//}
-//	//return &e.Terminals[e.terminalsMap[uuid]-1]
-//}
-
-func (e *Exec) commandRun(command string, ContainerID string, terminal *[]string) {
+func (e *Exec) CommandRun(term *TerminalRun) {
 	var ExecConfig types.ExecConfig
 	var Response types.IDResponse
 	var err error
 	var HResponse types.HijackedResponse
 	var c net.Conn
-	ExecConfig.Cmd = strings.Split(command, " ")
+	if term.ContainerID == "" {
+		e.execReadFinish(term, "Can't find running container")
+	}
+	ExecConfig.Cmd = strings.Split(term.Command, " ")
 	ExecConfig.AttachStdout = true
-	Response, err = e.dockerClient.client.ContainerExecCreate(e.dockerClient.context, ContainerID, ExecConfig)
+	if term.WorkDir != "" {
+		ExecConfig.WorkingDir = term.WorkDir
+	}
+	Response, err = e.dockerClient.client.ContainerExecCreate(e.dockerClient.context, term.ContainerID, ExecConfig)
 	if err != nil {
-		*terminal = append(*terminal, "Docker container from image " + ContainerID + " not running")
-		e.updateTerminal()
+		e.execReadFinish(term, err.Error())
 		return
 	}
-	HResponse, err = e.dockerClient.client.ContainerExecAttach(e.dockerClient.context, Response.ID, types.ExecStartCheck{Tty: true})
+	HResponse, err = e.dockerClient.client.ContainerExecAttach(e.dockerClient.context, Response.ID,
+		types.ExecStartCheck{Tty: true})
 	if err != nil {
-		panic(err)
+		e.execReadFinish(term, err.Error())
+		return
 	}
 	c = HResponse.Conn
 
@@ -103,35 +70,60 @@ func (e *Exec) commandRun(command string, ContainerID string, terminal *[]string
 			_, err = c.Read(buf)
 			if err != nil {
 				_ = c.Close()
-				*terminal = append(*terminal, "Finished -> "+command)
-				e.updateTerminal()
+				e.execReadFinish(term, err.Error())
 				return
-			} else {
-				*terminal = append(*terminal, string(buf))
 			}
-			e.updateTerminal()
+			e.execReadBuffer(term, string(buf))
+			e.updateTerminal(term.ID, false)
 		}
 	}()
 	_ = e.dockerClient.client.ContainerExecStart(e.dockerClient.context, Response.ID, types.ExecStartCheck{Tty: true})
 }
 
+func (e *Exec) execReadBuffer(term *TerminalRun, buf string) {
+	if buf != "" {
+		term.List.Rows = append(term.List.Rows, strings.Split(buf, "\n")...)
+	}
+}
 
-// Get container id by ContainerName or FromImage or ContainerId params.
-func (e *Exec) GetContainerId(term *TerminalRun) string {
+func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
+	e.execReadBuffer(term, "Finished -> "+term.Command)
+	e.execReadBuffer(term, buf)
+	e.updateTerminal(term.ID, true)
+}
+
+func (e *Exec) GetTerminal(id string) *TerminalRun {
+	for i := 0; i < len(e.Terminals); i++ {
+		if e.Terminals[i].ID == id {
+			return e.Terminals[i]
+		}
+	}
+	return nil
+}
+
+func (e *Exec) GetActiveTerminalIndex() int {
+	for i, term := range e.Terminals {
+		if term.Active {
+			return i
+		}
+	}
+	return -1
+}
+
+// Get container id by ContainerName or FromImage or ContainerID params.
+func (e *Exec) GetContainerID(config config.Config) string {
 	containers, err := e.dockerClient.client.ContainerList(e.dockerClient.context, types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
 	}
-
 	for _, c := range containers {
-
-		if term.FromImage != "" && strings.Contains(c.Image, term.FromImage) {
+		if config.Exec.Connect.FromImage != "" && strings.Contains(c.Image, config.Exec.Connect.FromImage) {
 			return c.ID
-		} else if term.ContainerId != "" && c.ID == term.ContainerId {
+		} else if config.Exec.Connect.ContainerID != "" && c.ID == config.Exec.Connect.ContainerID {
 			return c.ID
-		} else if term.ContainerName != "" {
+		} else if config.Exec.Connect.ContainerName != "" {
 			for _, name := range c.Names {
-				if strings.Contains(name, term.ContainerName) {
+				if strings.Contains(name, config.Exec.Connect.ContainerName) {
 					return c.ID
 				}
 			}

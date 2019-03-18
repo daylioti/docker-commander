@@ -7,11 +7,11 @@ require (
 	github.com/docker/docker v0.0.0-20190302001049-8aca18d631f3
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
-	github.com/gizak/termui v0.0.0-20190301140459-a9772ca75330
+	github.com/gizak/termui/v3 v3.0.0
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/gorilla/mux v1.7.0 // indirect
-	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+	github.com/maruel/panicparse v1.1.1 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
