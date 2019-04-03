@@ -7,7 +7,7 @@ import (
 
 type TabsPaneStyled struct {
 	Block
-	TabNames         []TabItem
+	TabNames         []*TabItem
 	ActiveTabIndex   int
 	ActiveTabStyle   Style
 	InactiveTabStyle Style
@@ -18,14 +18,9 @@ type TabItem struct {
 	Name  string
 }
 
-func NewTabPaneStyled(names ...string) *TabsPaneStyled {
-	var tabItem []TabItem
-	for _, name := range names {
-		tabItem = append(tabItem, TabItem{Style{}, name})
-	}
+func NewTabPaneStyled() *TabsPaneStyled {
 	return &TabsPaneStyled{
 		Block:            *NewBlock(),
-		TabNames:         tabItem,
 		ActiveTabStyle:   Theme.Tab.Active,
 		InactiveTabStyle: Theme.Tab.Inactive,
 	}

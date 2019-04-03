@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Main struct for execute commands inside docker containers.
 type Exec struct {
 	dockerClient   *Docker
 	Terminals      []*TerminalRun
@@ -16,9 +17,9 @@ type Exec struct {
 }
 
 type TerminalRun struct {
-	TabItem     commanderWidgets.TabItem // tab item text and styles
-	List        *widgets.List            // list widget with command output
-	Active      bool                     // opened tab or not
+	TabItem     *commanderWidgets.TabItem // tab item text and styles
+	List        *widgets.List             // list widget with command output
+	Active      bool                      // opened tab or not
 	Command     string
 	Running     bool
 	ContainerID string
@@ -27,7 +28,8 @@ type TerminalRun struct {
 	WorkDir     string
 }
 
-type fn func(string, bool)
+// Function for re-render after receiving some updates from execution command.
+type fn func(*TerminalRun, bool)
 
 func (e *Exec) Init(dockerClient *Docker) {
 	e.dockerClient = dockerClient
@@ -74,7 +76,7 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 				return
 			}
 			e.execReadBuffer(term, string(buf))
-			e.updateTerminal(term.ID, false)
+			e.updateTerminal(term, false)
 		}
 	}()
 	_ = e.dockerClient.client.ContainerExecStart(e.dockerClient.context, Response.ID, types.ExecStartCheck{Tty: true})
@@ -89,7 +91,7 @@ func (e *Exec) execReadBuffer(term *TerminalRun, buf string) {
 func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
 	e.execReadBuffer(term, "Finished -> "+term.Command)
 	e.execReadBuffer(term, buf)
-	e.updateTerminal(term.ID, true)
+	e.updateTerminal(term, true)
 }
 
 func (e *Exec) GetTerminal(id string) *TerminalRun {

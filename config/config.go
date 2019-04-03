@@ -19,10 +19,11 @@ type Config struct {
 }
 
 type ExecConfig struct {
-	Connect    ExecConnect `yaml:"connect"`
-	Env        []string    `yaml:"env"`     // Environment variables.
-	WorkingDir string      `yaml:"workdir"` // Working directory.
-	Cmd        string      `yaml:"cmd"`     // Execution commands and args
+	Connect    ExecConnect       `yaml:"connect"`
+	Env        []string          `yaml:"env"`     // Environment variables.
+	WorkingDir string            `yaml:"workdir"` // Working directory.
+	Cmd        string            `yaml:"cmd"`     // Execution commands and args
+	Input      map[string]string `yaml:"input"`
 }
 
 type ExecConnect struct {
@@ -48,8 +49,6 @@ func (cfg *Config) Init(path string) {
 				}
 			}
 		}
-	} else {
-		panic(err)
 	}
 	err = yaml.Unmarshal(data, cfg)
 	if err != nil {
@@ -77,14 +76,14 @@ func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *C
 			placeholders[k] = v
 		}
 		for key, value := range placeholders {
-			cfg.replacePlaceholder(key, value, &c.Config[i])
+			cfg.ReplacePlaceholder(key, value, &c.Config[i])
 		}
 		cfg.ChildConfigsPlaceholders(placeholders, &c.Config[i])
 	}
 	return placeholders
 }
 
-func (cfg *Config) replacePlaceholder(placeholder string, value string, c *Config) {
+func (cfg *Config) ReplacePlaceholder(placeholder string, value string, c *Config) {
 	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, 1)
 	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, 1)
 	c.Exec.Connect.ContainerID = strings.Replace(c.Exec.Connect.ContainerID, "@"+placeholder, value, 1)
@@ -94,5 +93,8 @@ func (cfg *Config) replacePlaceholder(placeholder string, value string, c *Confi
 	}
 	for k, v := range c.Placeholders {
 		c.Placeholders[k] = strings.Replace(v, "@"+placeholder, value, 1)
+	}
+	for k, v := range c.Exec.Input {
+		c.Exec.Input[k] = strings.Replace(v, "@"+placeholder, value, 1)
 	}
 }

@@ -9,14 +9,10 @@ import (
 
 type Commands struct {
 	ui           *UI
+	MaxHeight    int
 	cnf          *config.Config
-	lists        []MenuListsItems
 	dockerClient *docker.Docker
-}
-
-type MenuListsItems struct {
-	list  *widgets.List
-	ratio float64
+	Lists        []*widgets.List
 }
 
 func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker, ui *UI) {
@@ -42,11 +38,34 @@ func (cmd *Commands) Handle(key string) {
 	case "<Enter>":
 		selected := cmd.getSelected()
 		if selected.Exec.Cmd != "" {
-			id := cmd.ui.Term.GetIDFromPath(cmd.Path(cmd.cnf))
-			term := cmd.ui.Term.NewTerminal(selected, id)
-			cmd.ui.Term.Execute(term)
+			cmd.ExecuteSelectedCommand(selected)
 		}
 	}
+}
+
+func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
+	if len(cnf.Exec.Input) > 0 {
+		// Wait for input fields.
+		cn := make(chan map[string]string)
+		cmd.ui.Input.NewInputs(cnf.Exec.Input, &cn)
+		go func() {
+			for k, v := range <-cn {
+				cnf.ReplacePlaceholder(k, v, &cnf)
+			}
+			cmd.commandExecProcess(cnf)
+
+		}()
+	} else {
+		cmd.commandExecProcess(cnf)
+	}
+}
+
+func (cmd *Commands) commandExecProcess(cnf config.Config) {
+	cnf.Exec.Input = nil
+	id := cmd.ui.Term.GetIDFromPath(cmd.Path(cmd.cnf))
+	term := cmd.ui.Term.NewTerminal(cnf, id)
+	cmd.ui.Term.DisplayTerminal = term.List
+	cmd.ui.Term.Execute(term)
 }
 
 func (cmd *Commands) SetDockerClient(client *docker.Docker) {
@@ -154,42 +173,45 @@ func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 
 func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 	var width int
-	var menuList *MenuListsItems
+	var height int
+	var menuList *widgets.List
+	borderSize := 2
+	widthPrev := 0
 	path := append(cmd.Path(cmd.cnf), 0)
-	cmd.lists = nil
+	cmd.Lists = nil
+	cmd.MaxHeight = 0
 	for i, pathIndex := range path {
 		if len(c.Config) <= pathIndex {
 			break
 		}
 		width = 0
-		cmd.lists = append(cmd.lists, MenuListsItems{
-			list: widgets.NewList(),
-		})
-		menuList = &cmd.lists[i]
-		cmd.lists[i].list.SelectedRow = 0
+		cmd.Lists = append(cmd.Lists, widgets.NewList())
+		menuList = cmd.Lists[i]
+		menuList.SelectedRow = 0
 		for p, cnf := range c.Config {
 			if cnf.Selected {
-				menuList.list.SelectedRow = len(menuList.list.Rows)
-				menuList.list.BorderStyle = termui.NewStyle(termui.ColorGreen)
-				menuList.list.SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+				menuList.SelectedRow = len(menuList.Rows)
+				menuList.BorderStyle = termui.NewStyle(termui.ColorGreen)
+				menuList.SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
 			} else if !cnf.Selected && len(path) > i && pathIndex == p && i < len(path)-1 {
-				menuList.list.SelectedRow = len(menuList.list.Rows)
-				menuList.list.SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
+				menuList.SelectedRow = len(menuList.Rows)
+				menuList.SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
 			}
-			menuList.list.Rows = append(menuList.list.Rows, cnf.Name)
+			menuList.Rows = append(menuList.Rows, cnf.Name)
 			if len(cnf.Name) > width {
 				width = len(cnf.Name)
 			}
 		}
-		menuList.ratio = cmd.getMenuColumnRatio(cmd.ui.widthDimension, width)
+		menuList.Border = true
+		height = len(menuList.Rows) + borderSize
+		if cmd.MaxHeight < height {
+			cmd.MaxHeight = height
+		}
+		width = width + borderSize
+		menuList.SetRect(widthPrev, 0, widthPrev+width, height)
+		widthPrev += width
 		c = &c.Config[pathIndex]
 	}
-}
-
-func (cmd *Commands) GetLists() []MenuListsItems {
-	return cmd.lists
-}
-
-func (cmd *Commands) getMenuColumnRatio(widthDimension int, maxTextLength int) float64 {
-	return float64(maxTextLength+2/(widthDimension/100)) / 100
+	cmd.ui.Term.TabPane.SetRect(0, cmd.MaxHeight, cmd.ui.TermWidth, cmd.MaxHeight+3)
+	cmd.ui.Term.DisplayTerminal.SetRect(0, cmd.MaxHeight+3, cmd.ui.TermWidth, cmd.ui.TermHeight)
 }

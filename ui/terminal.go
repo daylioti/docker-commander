@@ -25,17 +25,15 @@ func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 	t.client.Exec.SetTerminalUpdateFn(t.TerminalUpdate)
 }
 
-func (t *TerminalUI) TerminalUpdate(id string, finished bool) {
-	term := t.client.Exec.GetTerminal(id)
-	if term != nil {
-		if finished {
-			term.Running = false
-			term.TabItem.Style = termui.NewStyle(termui.ColorRed)
-		}
-		if term.Active {
-			t.ui.Render()
-		}
-
+func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
+	if finished {
+		term.Running = false
+		term.TabItem.Style = termui.NewStyle(termui.ColorRed)
+		//t.UpdateRunningStatus()
+		t.ui.Render()
+	}
+	if term.Active {
+		t.ui.Render()
 	}
 }
 
@@ -57,12 +55,14 @@ func (t *TerminalUI) Handle(key string) {
 		if index > 0 {
 			t.SwitchTerminal(t.client.Exec.Terminals[index-1].ID)
 		}
+		t.ui.Render()
 	case "<Right>", "L", "l":
 		t.TabPane.FocusRight()
 		index := t.client.Exec.GetActiveTerminalIndex()
 		if index >= 0 && index < len(t.client.Exec.Terminals)-1 {
 			t.SwitchTerminal(t.client.Exec.Terminals[index+1].ID)
 		}
+		t.ui.Render()
 	}
 }
 
@@ -78,6 +78,7 @@ func (t *TerminalUI) SwitchTerminal(id string) {
 	for _, term := range t.client.Exec.Terminals {
 		if term.ID == id {
 			term.Active = true
+			t.DisplayTerminal = term.List
 		} else {
 			term.Active = false
 		}
@@ -87,40 +88,38 @@ func (t *TerminalUI) SwitchTerminal(id string) {
 }
 
 func (t *TerminalUI) UpdateRunningStatus() {
+	var terminal *docker.TerminalRun
+	t.TabPane.TabNames = nil
 	for i := 0; i < len(t.client.Exec.Terminals); i++ {
-		if t.client.Exec.Terminals[i].Active {
-			t.client.Exec.Terminals[i].TabItem.Style = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
-		} else if t.client.Exec.Terminals[i].Running {
-			t.client.Exec.Terminals[i].TabItem.Style = termui.NewStyle(termui.ColorGreen)
+		terminal = t.client.Exec.Terminals[i]
+		if terminal.Active {
+			terminal.TabItem.Style = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+			t.DisplayTerminal = terminal.List
+		} else if terminal.Running {
+			terminal.TabItem.Style = termui.NewStyle(termui.ColorGreen)
 		} else {
-			t.client.Exec.Terminals[i].TabItem.Style = termui.NewStyle(termui.ColorRed)
+			terminal.TabItem.Style = termui.NewStyle(termui.ColorRed)
 		}
+		t.TabPane.TabNames = append(t.TabPane.TabNames, terminal.TabItem)
 	}
-}
-
-func (t *TerminalUI) GetTabPaneItems() []commanderWidgets.TabItem {
-	var items []commanderWidgets.TabItem
-	for i := 0; i < len(t.client.Exec.Terminals); i++ {
-		items = append(items, t.client.Exec.Terminals[i].TabItem)
-	}
-	return items
 }
 
 func (t *TerminalUI) Execute(term *docker.TerminalRun) {
 	t.client.Exec.Terminals = append(t.client.Exec.Terminals, term)
 	t.client.Exec.CommandRun(term)
-	t.ui.Render()
+	t.ui.ClearRender = true
+	t.SwitchTerminal(term.ID)
 }
 
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
 	return &docker.TerminalRun{
-		TabItem: commanderWidgets.TabItem{
+		TabItem: &commanderWidgets.TabItem{
 			Name:  config.Name,
 			Style: termui.NewStyle(termui.ColorGreen),
 		},
 		List:        widgets.NewList(),
 		Active:      true,
-		Running:     true,
+		Running:     false,
 		ContainerID: t.client.Exec.GetContainerID(config),
 		Name:        config.Name,
 		ID:          id,

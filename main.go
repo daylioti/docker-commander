@@ -41,25 +41,19 @@ func main() {
 		*configFileFlag = "./config.yml"
 	}
 	dockerClient := &docker.Docker{}
-
 	Cnf := &config.Config{}
 	Cnf.Init(*configFileFlag)
 	if *clientWithVersion != "" {
 		ops = append(ops, client.WithVersion(*clientWithVersion))
-	} else {
-		ops = append(ops, client.WithVersion("1.39"))
 	}
 
-	if *clientWithHost != "" {
-		ops = append(ops, client.WithHost(*clientWithHost))
-	}
+	dockerClient.Init(*clientWithHost, ops...)
+
 	err := termui.Init()
 	if err != nil {
 		panic(err)
 	}
 	defer termui.Close()
-
-	dockerClient.Init(ops...)
 
 	UI := new(ui.UI)
 	UI.Init(Cnf, dockerClient)
@@ -68,11 +62,17 @@ func main() {
 	for e := range uiEvents {
 		switch e.ID {
 		case "q", "<C-c>", "Q":
-			return
+			if len(UI.Input.Fields) > 0 && e.ID != "<C-c>" {
+				panic(len(UI.Input.Fields))
+				UI.Handle(e.ID)
+			} else {
+				return
+			}
+
 		case "<Resize>":
 			payload := e.Payload.(termui.Resize)
-			UI.Grid.SetRect(0, 0, payload.Width, payload.Height)
-			UI.Cmd.UpdateRenderElements(Cnf)
+			UI.TermHeight = payload.Height
+			UI.TermWidth = payload.Width
 			UI.Render()
 		default:
 			UI.Handle(e.ID)
