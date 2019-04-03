@@ -63,7 +63,6 @@ func main() {
 		switch e.ID {
 		case "q", "<C-c>", "Q":
 			if len(UI.Input.Fields) > 0 && e.ID != "<C-c>" {
-				panic(len(UI.Input.Fields))
 				UI.Handle(e.ID)
 			} else {
 				return

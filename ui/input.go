@@ -64,7 +64,8 @@ func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string)
 		box = commanderWidgets.NewTextBox()
 		box.Title = title
 		box.ID = id
-		box.SetRect(int(in.ui.TermWidth/4), i*InputFieldHeight, in.ui.TermWidth-int(in.ui.TermWidth/4), i*InputFieldHeight+InputFieldHeight)
+		box.SetRect(int(in.ui.TermWidth/4), i*InputFieldHeight, in.ui.TermWidth-int(in.ui.TermWidth/4),
+			i*InputFieldHeight+InputFieldHeight)
 		in.Fields = append(in.Fields, box)
 		i++
 	}

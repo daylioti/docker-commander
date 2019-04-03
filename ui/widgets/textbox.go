@@ -13,7 +13,6 @@ type TextBox struct {
 	CursorStyle Style
 	ShowCursor  bool
 	ID          string
-
 	text        [][]Cell
 	cursorPoint image.Point
 }
@@ -40,96 +39,96 @@ func NewTextBox() *TextBox {
 	}
 }
 
-func (self *TextBox) Draw(buf *Buffer) {
-	self.Block.Draw(buf)
+func (tb *TextBox) Draw(buf *Buffer) {
+	tb.Block.Draw(buf)
 
 	yCoordinate := 0
-	for _, line := range self.text {
-		if self.WrapText {
-			line = WrapCells(line, uint(self.Inner.Dx()))
+	for _, line := range tb.text {
+		if tb.WrapText {
+			line = WrapCells(line, uint(tb.Inner.Dx()))
 		}
 		lines := SplitCells(line, '\n')
 		for _, line := range lines {
 			for _, cx := range BuildCellWithXArray(line) {
 				x, cell := cx.X, cx.Cell
-				buf.SetCell(cell, image.Pt(x, yCoordinate).Add(self.Inner.Min))
+				buf.SetCell(cell, image.Pt(x, yCoordinate).Add(tb.Inner.Min))
 			}
 			yCoordinate++
 		}
-		if yCoordinate > self.Inner.Max.Y {
+		if yCoordinate > tb.Inner.Max.Y {
 			break
 		}
 	}
 
-	if self.ShowCursor {
-		point := self.cursorPoint.Add(self.Inner.Min).Sub(image.Pt(1, 1))
+	if tb.ShowCursor {
+		point := tb.cursorPoint.Add(tb.Inner.Min).Sub(image.Pt(1, 1))
 		cell := buf.GetCell(point)
-		cell.Style = self.CursorStyle
+		cell.Style = tb.CursorStyle
 		buf.SetCell(cell, point)
 	}
 }
 
-func (self *TextBox) Backspace() {
-	if self.cursorPoint == image.Pt(1, 1) {
+func (tb *TextBox) Backspace() {
+	if tb.cursorPoint == image.Pt(1, 1) {
 		return
 	}
-	if self.cursorPoint.X == 1 {
-		index := self.cursorPoint.Y - 1
-		self.cursorPoint.X = len(self.text[index-1]) + 1
-		self.text = append(
-			self.text[:index-1],
+	if tb.cursorPoint.X == 1 {
+		index := tb.cursorPoint.Y - 1
+		tb.cursorPoint.X = len(tb.text[index-1]) + 1
+		tb.text = append(
+			tb.text[:index-1],
 			append(
-				[][]Cell{append(self.text[index-1], self.text[index]...)},
-				self.text[index+1:len(self.text)]...,
+				[][]Cell{append(tb.text[index-1], tb.text[index]...)},
+				tb.text[index+1:len(tb.text)]...,
 			)...,
 		)
-		self.cursorPoint.Y--
+		tb.cursorPoint.Y--
 	} else {
-		index := self.cursorPoint.Y - 1
-		self.text[index] = append(
-			self.text[index][:self.cursorPoint.X-2],
-			self.text[index][self.cursorPoint.X-1:]...,
+		index := tb.cursorPoint.Y - 1
+		tb.text[index] = append(
+			tb.text[index][:tb.cursorPoint.X-2],
+			tb.text[index][tb.cursorPoint.X-1:]...,
 		)
-		self.cursorPoint.X--
+		tb.cursorPoint.X--
 	}
 }
 
 // InsertText inserts the given text at the cursor position.
-func (self *TextBox) InsertText(input string) {
-	cells := ParseStyles(input, self.TextStyle)
+func (tb *TextBox) InsertText(input string) {
+	cells := ParseStyles(input, tb.TextStyle)
 	lines := SplitCells(cells, '\n')
-	index := self.cursorPoint.Y - 1
-	cellsAfterCursor := self.text[index][self.cursorPoint.X-1:]
-	self.text[index] = append(self.text[index][:self.cursorPoint.X-1], lines[0]...)
+	index := tb.cursorPoint.Y - 1
+	cellsAfterCursor := tb.text[index][tb.cursorPoint.X-1:]
+	tb.text[index] = append(tb.text[index][:tb.cursorPoint.X-1], lines[0]...)
 	for i, line := range lines[1:] {
-		index := self.cursorPoint.Y + i
-		self.text = append(self.text[:index], append([][]Cell{line}, self.text[index:]...)...)
+		index := tb.cursorPoint.Y + i
+		tb.text = append(tb.text[:index], append([][]Cell{line}, tb.text[index:]...)...)
 	}
-	self.cursorPoint.Y += len(lines) - 1
-	index = self.cursorPoint.Y - 1
-	self.text[index] = append(self.text[index], cellsAfterCursor...)
+	tb.cursorPoint.Y += len(lines) - 1
+	index = tb.cursorPoint.Y - 1
+	tb.text[index] = append(tb.text[index], cellsAfterCursor...)
 	if len(lines) > 1 {
-		self.cursorPoint.X = len(lines[len(lines)-1]) + 1
+		tb.cursorPoint.X = len(lines[len(lines)-1]) + 1
 	} else {
-		self.cursorPoint.X += len(lines[0])
+		tb.cursorPoint.X += len(lines[0])
 	}
 }
 
 // ClearText clears the text and resets the cursor position.
-func (self *TextBox) ClearText() {
-	self.text = [][]Cell{[]Cell{}}
-	self.cursorPoint = image.Pt(1, 1)
+func (tb *TextBox) ClearText() {
+	tb.text = [][]Cell{[]Cell{}}
+	tb.cursorPoint = image.Pt(1, 1)
 }
 
 // SetText sets the text to the given text.
-func (self *TextBox) SetText(input string) {
-	self.ClearText()
-	self.InsertText(input)
+func (tb *TextBox) SetText(input string) {
+	tb.ClearText()
+	tb.InsertText(input)
 }
 
-func (self *TextBox) GetText() string {
+func (tb *TextBox) GetText() string {
 	var text string
-	for _, r := range self.text {
+	for _, r := range tb.text {
 		for _, t := range r {
 			text += string(t.Rune)
 		}
@@ -137,23 +136,23 @@ func (self *TextBox) GetText() string {
 	return text
 }
 
-func (self *TextBox) MoveCursorLeft() {
-	self.MoveCursor(self.cursorPoint.X-1, self.cursorPoint.Y)
+func (tb *TextBox) MoveCursorLeft() {
+	tb.MoveCursor(tb.cursorPoint.X-1, tb.cursorPoint.Y)
 }
 
-func (self *TextBox) MoveCursorRight() {
-	self.MoveCursor(self.cursorPoint.X+1, self.cursorPoint.Y)
+func (tb *TextBox) MoveCursorRight() {
+	tb.MoveCursor(tb.cursorPoint.X+1, tb.cursorPoint.Y)
 }
 
-func (self *TextBox) MoveCursorUp() {
-	self.MoveCursor(self.cursorPoint.X, self.cursorPoint.Y-1)
+func (tb *TextBox) MoveCursorUp() {
+	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y-1)
 }
 
-func (self *TextBox) MoveCursorDown() {
-	self.MoveCursor(self.cursorPoint.X, self.cursorPoint.Y+1)
+func (tb *TextBox) MoveCursorDown() {
+	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y+1)
 }
 
-func (self *TextBox) MoveCursor(x, y int) {
-	self.cursorPoint.Y = MinInt(MaxInt(1, y), len(self.text))
-	self.cursorPoint.X = MinInt(MaxInt(1, x), len(self.text[self.cursorPoint.Y-1])+1)
+func (tb *TextBox) MoveCursor(x, y int) {
+	tb.cursorPoint.Y = MinInt(MaxInt(1, y), len(tb.text))
+	tb.cursorPoint.X = MinInt(MaxInt(1, x), len(tb.text[tb.cursorPoint.Y-1])+1)
 }

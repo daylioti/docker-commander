@@ -30,9 +30,9 @@ func (d *Docker) Init(version string, ops ...func(*client.Client) error) {
 			panic(err)
 		}
 		min, _ := strconv.ParseFloat(api.MinVersion, 32)
-		clientApiVersion, _ := strconv.ParseFloat(ping.APIVersion, 32)
+		clientAPIVersion, _ := strconv.ParseFloat(ping.APIVersion, 32)
 		max, _ := strconv.ParseFloat(api.DefaultVersion, 32)
-		if min <= clientApiVersion && clientApiVersion <= max {
+		if min <= clientAPIVersion && clientAPIVersion <= max {
 			ops = append(ops, client.WithVersion(ping.APIVersion))
 		}
 	}

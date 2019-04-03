@@ -98,19 +98,22 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	if c.Name == "" {
 		return
 	}
-	if x == 1 && c.Config != nil && len(c.Config) >= 0 {
+
+	switch {
+	case x == 1 && c.Config != nil:
 		c.Selected = false
 		c.Config[0].Selected = true
-	} else if x == -1 && cp != nil && cp.Name != "" {
+	case x == -1 && cp != nil && cp.Name != "":
 		c.Selected = false
 		cp.Selected = true
-	} else if y == 1 && cd != nil {
+	case y == 1 && cd != nil:
 		c.Selected = false
 		cd.Selected = true
-	} else if y == -1 && cu != nil {
+	case y == -1 && cu != nil:
 		c.Selected = false
 		cu.Selected = true
 	}
+
 	cmd.updateStatus(cnf, cmd.Path(cnf))
 	cmd.UpdateRenderElements(cmd.cnf)
 
@@ -132,7 +135,7 @@ func (cmd *Commands) Path(cnf *config.Config) []int {
 	cmd.getSelectedPath(&path, cnf)
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] > 0 {
-			p = append(p, int(path[i])-1)
+			p = append(p, path[i]-1)
 		}
 	}
 	return p
@@ -207,7 +210,7 @@ func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 		if cmd.MaxHeight < height {
 			cmd.MaxHeight = height
 		}
-		width = width + borderSize
+		width += borderSize
 		menuList.SetRect(widthPrev, 0, widthPrev+width, height)
 		widthPrev += width
 		c = &c.Config[pathIndex]
