@@ -1,3 +1,5 @@
+[![Current Release](https://img.shields.io/github/release/daylioti/docker-commander.svg)](https://github.com/daylioti/docker-commander/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/daylioti/docker-commander)](https://goreportcard.com/report/github.com/daylioti/docker-commander)
 
 <code>docker-commander</code> is a cross-platform, customizable, execution commands in docker containers dashboard based on <a href="https://github.com/gizak/termui">termui</a>
 
