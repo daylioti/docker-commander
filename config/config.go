@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Config main config structure for commands lists.
 type Config struct {
 	Name         string            `yaml:"name"` // Display name
 	Selected     bool              // Selected config or not
@@ -18,7 +19,7 @@ type Config struct {
 	Placeholders map[string]string `yaml:"placeholders"`
 }
 
-//
+// CnfInit unmarshal yml by structures.
 func CnfInit(path string, configs ...interface{}) {
 	var err error
 	var data []byte
@@ -45,6 +46,7 @@ func CnfInit(path string, configs ...interface{}) {
 	}
 }
 
+// Init set default selected items, replace placeholders.
 func (cfg *Config) Init() {
 	cfg.ChildConfigsPlaceholders(make(map[string]string), cfg)
 
@@ -62,6 +64,7 @@ func (cfg *Config) Init() {
 	}
 }
 
+// ChildConfigsPlaceholders replace placeholders in children menu items.
 func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *Config) map[string]string {
 	for i := 0; i < len(c.Config); i++ {
 		for k, v := range c.Placeholders {
@@ -75,6 +78,7 @@ func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *C
 	return placeholders
 }
 
+// ReplacePlaceholder replace placeholders in all available fields.
 func (cfg *Config) ReplacePlaceholder(placeholder string, value string, c *Config) {
 	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, 1)
 	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, 1)
