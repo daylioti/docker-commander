@@ -10,6 +10,7 @@ import (
 	"sync"
 )
 
+// TerminalUI UI struct.
 type TerminalUI struct {
 	ui              *UI
 	client          *docker.Docker
@@ -18,6 +19,7 @@ type TerminalUI struct {
 	mux             sync.Mutex
 }
 
+// Init initialize terminal render component.
 func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 	t.ui = ui
 	t.client = client
@@ -31,19 +33,23 @@ func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 	t.client.Exec.SetTerminalUpdateFn(t.TerminalUpdate)
 }
 
+// Render function, that render terminal component.
 func (t *TerminalUI) Render() {
 	t.TabPaneRender()
 	t.DisplayTerminalRender()
 }
 
+// TabPaneRender render only tab.
 func (t *TerminalUI) TabPaneRender() {
 	termui.Render(t.TabPane)
 }
 
+// DisplayTerminalRender render only terminal.
 func (t *TerminalUI) DisplayTerminalRender() {
 	termui.Render(t.DisplayTerminal)
 }
 
+// TerminalUpdate calls on receive updates from docker process.
 func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
 	if finished {
 		term.Running = false
@@ -56,6 +62,7 @@ func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
 	}
 }
 
+// Handle keyboard keys.
 func (t *TerminalUI) Handle(key string) {
 	switch key {
 	case "<Up>", "K", "k":
@@ -85,6 +92,7 @@ func (t *TerminalUI) Handle(key string) {
 	}
 }
 
+// GetIDFromPath get id from selected commands list item.
 func (t *TerminalUI) GetIDFromPath(path []int) string {
 	id := "0"
 	for _, i := range path {
@@ -93,6 +101,7 @@ func (t *TerminalUI) GetIDFromPath(path []int) string {
 	return id
 }
 
+// SwitchTerminal set selected terminal with id.
 func (t *TerminalUI) SwitchTerminal(id string) {
 	t.mux.Lock()
 	for _, term := range t.client.Exec.Terminals {
@@ -110,6 +119,7 @@ func (t *TerminalUI) SwitchTerminal(id string) {
 	t.mux.Unlock()
 }
 
+// Focus commands lists, set borders.
 func (t *TerminalUI) Focus() {
 	t.TabPane.BorderStyle = termui.NewStyle(termui.ColorGreen)
 	t.DisplayTerminal.BorderStyle = termui.NewStyle(termui.ColorGreen)
@@ -117,6 +127,7 @@ func (t *TerminalUI) Focus() {
 	t.ui.Render()
 }
 
+// UnFocus commands lists, remove borders.
 func (t *TerminalUI) UnFocus() {
 	t.UpdateRunningStatus()
 	t.TabPane.BorderStyle = termui.NewStyle(termui.ColorWhite)
@@ -133,10 +144,12 @@ func (t *TerminalUI) UnFocus() {
 	t.ui.Render()
 }
 
+// SetDisplayTerminal change display terminal.
 func (t *TerminalUI) SetDisplayTerminal(term *widgets.List) {
 	t.DisplayTerminal = term
 }
 
+// UpdateRunningStatus change tabs colors depends on selected tab, running or not process in docker.
 func (t *TerminalUI) UpdateRunningStatus() {
 	var terminal *docker.TerminalRun
 	t.TabPane.TabNames = nil
@@ -158,12 +171,14 @@ func (t *TerminalUI) UpdateRunningStatus() {
 	}
 }
 
+// Execute start new process in docker.
 func (t *TerminalUI) Execute(term *docker.TerminalRun) {
 	t.client.Exec.Terminals = append(t.client.Exec.Terminals, term)
 	t.client.Exec.CommandRun(term)
 	t.SwitchTerminal(term.ID)
 }
 
+// NewTerminal return new terminal object,
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
 	list := widgets.NewList()
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
