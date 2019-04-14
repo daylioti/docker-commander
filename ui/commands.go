@@ -5,11 +5,11 @@ import (
 	"github.com/daylioti/docker-commander/docker"
 	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"strconv"
 )
 
 type Commands struct {
 	ui           *UI
-	MaxHeight    int
 	cnf          *config.Config
 	dockerClient *docker.Docker
 	Lists        []*widgets.List
@@ -43,6 +43,25 @@ func (cmd *Commands) Handle(key string) {
 	}
 }
 
+func (cmd *Commands) Render() {
+	for listIndex := 0; listIndex < len(cmd.Lists); listIndex++ {
+		termui.Render(cmd.Lists[listIndex])
+	}
+}
+
+func (cmd *Commands) Focus() {
+	cmd.UpdateRenderElements(cmd.cnf)
+	cmd.Render()
+}
+
+func (cmd *Commands) UnFocus() {
+	for _, list := range cmd.Lists {
+		list.BorderStyle = termui.NewStyle(termui.ColorWhite)
+		//for _, item := range list.Rows
+	}
+	cmd.Render()
+}
+
 func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 	if len(cnf.Exec.Input) > 0 {
 		// Wait for input fields.
@@ -52,8 +71,8 @@ func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 			for k, v := range <-cn {
 				cnf.ReplacePlaceholder(k, v, &cnf)
 			}
+			cmd.ui.ClearRender = true
 			cmd.commandExecProcess(cnf)
-
 		}()
 	} else {
 		cmd.commandExecProcess(cnf)
@@ -64,7 +83,7 @@ func (cmd *Commands) commandExecProcess(cnf config.Config) {
 	cnf.Exec.Input = nil
 	id := cmd.ui.Term.GetIDFromPath(cmd.Path(cmd.cnf))
 	term := cmd.ui.Term.NewTerminal(cnf, id)
-	cmd.ui.Term.DisplayTerminal = term.List
+	//cmd.ui.Term.DisplayTerminal = term.List
 	cmd.ui.Term.Execute(term)
 }
 
@@ -74,10 +93,8 @@ func (cmd *Commands) SetDockerClient(client *docker.Docker) {
 
 func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	path := cmd.Path(cmd.cnf)
-	var c *config.Config
-	var cp *config.Config
-	var cu *config.Config
-	var cd *config.Config
+	var c, cp, cu, cd *config.Config
+	var clear bool
 	cnf.Selected = false
 	c = cnf
 	for i := 0; i <= len(path); i++ {
@@ -103,21 +120,36 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	case x == 1 && c.Config != nil:
 		c.Selected = false
 		c.Config[0].Selected = true
+		clear = true
 	case x == -1 && cp != nil && cp.Name != "":
 		c.Selected = false
 		cp.Selected = true
+		clear = true
 	case y == 1 && cd != nil:
 		c.Selected = false
 		cd.Selected = true
+		if cd.Config != nil || c.Config != nil {
+			clear = true
+		}
 	case y == -1 && cu != nil:
 		c.Selected = false
 		cu.Selected = true
+		if cu.Config != nil || c.Config != nil {
+			clear = true
+		}
 	}
 
 	cmd.updateStatus(cnf, cmd.Path(cnf))
 	cmd.UpdateRenderElements(cmd.cnf)
-
-	cmd.ui.Render()
+	if !clear {
+		// No new elements and elements to remove.
+		// Just render command lists
+		cmd.Render()
+	} else {
+		// Re-render all.
+		termui.Clear()
+		cmd.ui.Render()
+	}
 }
 
 func (cmd *Commands) getSelected() config.Config {
@@ -175,14 +207,18 @@ func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 }
 
 func (cmd *Commands) UpdateRenderElements(c *config.Config) {
-	var width int
-	var height int
+	var width, height int
+	if h, exist := cmd.ui.configUi.UI.Commands["height"]; !exist {
+		height = 5
+	} else {
+		height, _ = strconv.Atoi(h)
+	}
+
 	var menuList *widgets.List
 	borderSize := 2
 	widthPrev := 0
 	path := append(cmd.Path(cmd.cnf), 0)
 	cmd.Lists = nil
-	cmd.MaxHeight = 0
 	for i, pathIndex := range path {
 		if len(c.Config) <= pathIndex {
 			break
@@ -206,15 +242,15 @@ func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 			}
 		}
 		menuList.Border = true
-		height = len(menuList.Rows) + borderSize
-		if cmd.MaxHeight < height {
-			cmd.MaxHeight = height
-		}
+		//height = len(menuList.Rows) + borderSize
+		//if cmd.MaxHeight < height {
+		//	cmd.MaxHeight = height
+		//}
 		width += borderSize
-		menuList.SetRect(widthPrev, 0, widthPrev+width, height)
+		menuList.SetRect(widthPrev, 0, widthPrev+width, height+borderSize)
 		widthPrev += width
 		c = &c.Config[pathIndex]
 	}
-	cmd.ui.Term.TabPane.SetRect(0, cmd.MaxHeight, cmd.ui.TermWidth, cmd.MaxHeight+3)
-	cmd.ui.Term.DisplayTerminal.SetRect(0, cmd.MaxHeight+3, cmd.ui.TermWidth, cmd.ui.TermHeight)
+	//cmd.ui.Term.TabPane.SetRect(0, cmd.MaxHeight, cmd.ui.TermWidth, cmd.MaxHeight+3)
+	//cmd.ui.Term.DisplayTerminal.SetRect(0, cmd.MaxHeight+3, cmd.ui.TermWidth, cmd.ui.TermHeight)
 }

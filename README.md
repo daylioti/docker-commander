@@ -29,7 +29,7 @@ Option | Description
 
 Key | Action
 --- | ---
-\<enter\> | Execute command
+\<Enter\> | Execute command
 \<Left\>, \<Right\>, \<Up\>, \<Down\>, H, J, K, L  | Menu/terminal controls 
 \<Tab\> | Switch between terminal and menu
 q | Quit docker-commander
@@ -37,7 +37,7 @@ q | Quit docker-commander
 ## Usage
 
 `docker-commander` requires config file to build menu, default config path - ./config.yml.
- You can also use `-c` param to specify path to yml file.
+ You can also use `-c` param to specify path to yml file or url to download.
 ### Docker api
 By default `docker-commander` tries to find local docker api client or you can specify it with 
 `-api-host` param

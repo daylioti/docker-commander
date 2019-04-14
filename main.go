@@ -42,7 +42,9 @@ func main() {
 	}
 	dockerClient := &docker.Docker{}
 	Cnf := &config.Config{}
-	Cnf.Init(*configFileFlag)
+	CnfUi := &config.UIConfig{}
+	config.CnfInit(*configFileFlag, Cnf, CnfUi)
+	Cnf.Init()
 	if *clientWithVersion != "" {
 		ops = append(ops, client.WithVersion(*clientWithVersion))
 	}
@@ -56,7 +58,7 @@ func main() {
 	defer termui.Close()
 
 	UI := new(ui.UI)
-	UI.Init(Cnf, dockerClient)
+	UI.Init(Cnf, dockerClient, CnfUi)
 
 	uiEvents := termui.PollEvents()
 	for e := range uiEvents {

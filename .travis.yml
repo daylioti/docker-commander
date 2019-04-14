@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.12.1
+  - 1.11.x
 
 git:
   depth: 1
@@ -12,24 +12,16 @@ notifications:
 env:
   global:
     - NAME=docker-commander
-    - GO111MODULE=on
-    - GOFLAGS='-mod vendor'
 
-before_script:
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 matrix:
   include:
     # Linux
     - env: _GOOS=linux _GOARCH=amd64
       os: linux
-    - env: _GOOS=linux _GOARCH=386
-      os: linux
-    - env: _GOOS=linux _GOARCH=arm64
-      os: linux
 
-    # OSX
-    - env: _GOOS=darwin _GOARCH=amd64
-      os: osx
+
+
+install: true
 
 

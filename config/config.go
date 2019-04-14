@@ -18,21 +18,8 @@ type Config struct {
 	Placeholders map[string]string `yaml:"placeholders"`
 }
 
-type ExecConfig struct {
-	Connect    ExecConnect       `yaml:"connect"`
-	Env        []string          `yaml:"env"`     // Environment variables.
-	WorkingDir string            `yaml:"workdir"` // Working directory.
-	Cmd        string            `yaml:"cmd"`     // Execution commands and args
-	Input      map[string]string `yaml:"input"`
-}
-
-type ExecConnect struct {
-	FromImage     string `yaml:"container_image"` // The name of the image from which the container is made.
-	ContainerName string `yaml:"container_name"`  // Container Name
-	ContainerID   string `yaml:"container_id"`    // Container id
-}
-
-func (cfg *Config) Init(path string) {
+//
+func CnfInit(path string, configs ...interface{}) {
 	var err error
 	var data []byte
 	data, err = ioutil.ReadFile(path)
@@ -50,10 +37,15 @@ func (cfg *Config) Init(path string) {
 			}
 		}
 	}
-	err = yaml.Unmarshal(data, cfg)
-	if err != nil {
-		panic(err)
+	for _, cfg := range configs {
+		err = yaml.Unmarshal(data, cfg)
+		if err != nil {
+			panic(err)
+		}
 	}
+}
+
+func (cfg *Config) Init() {
 	cfg.ChildConfigsPlaceholders(make(map[string]string), cfg)
 
 	// Set default config data.
