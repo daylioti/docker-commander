@@ -124,36 +124,42 @@ func (cmd *Commands) getNearestConfigs() (*config.Config, *config.Config, *confi
 	return c, cp, cu, cd
 }
 
-// changeSelected change selected, depends on current selected item.
-func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
-	var clear bool
-	c, cp, cu, cd := cmd.getNearestConfigs()
-	if c.Name == "" {
-		return
-	}
-
+// changeCommandsSelected change selected in cnf struct, depends on current selected item.
+// return bool - requires re-render or not.
+func (cmd *Commands) changeCommandsSelected(x, y int, c, cp, cu, cd *config.Config) bool {
 	switch {
 	case x == 1 && c.Config != nil:
 		c.Selected = false
 		c.Config[0].Selected = true
-		clear = true
+		return true
 	case x == -1 && cp != nil && cp.Name != "":
 		c.Selected = false
 		cp.Selected = true
-		clear = true
+		return true
 	case y == 1 && cd != nil:
 		c.Selected = false
 		cd.Selected = true
 		if cd.Config != nil || c.Config != nil {
-			clear = true
+			return true
 		}
 	case y == -1 && cu != nil:
 		c.Selected = false
 		cu.Selected = true
 		if cu.Config != nil || c.Config != nil {
-			clear = true
+			return true
 		}
 	}
+	return false
+}
+
+// changeSelected change selected, depends on current selected item.
+func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
+	c, cp, cu, cd := cmd.getNearestConfigs()
+	if c.Name == "" {
+		return
+	}
+
+	clear := cmd.changeCommandsSelected(x, y, c, cp, cu, cd)
 
 	cmd.updateStatus(cnf, cmd.Path(cnf))
 	cmd.UpdateRenderElements(cmd.cnf)
