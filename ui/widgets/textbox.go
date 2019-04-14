@@ -5,7 +5,7 @@ import (
 	"image"
 )
 
-// TextBox
+// TextBox main text box struct.
 type TextBox struct {
 	termui.Block
 	WrapText    bool
@@ -17,19 +17,19 @@ type TextBox struct {
 	cursorPoint image.Point
 }
 
-// TextBoxTheme
+// TextBoxTheme text box theme.
 var TextBoxTheme = TextBoxThemeType{
 	Text:   termui.NewStyle(termui.ColorWhite),
 	Cursor: termui.NewStyle(termui.ColorWhite, termui.ColorClear, termui.ModifierReverse),
 }
 
-// TextBoxThemeType
+// TextBoxThemeType theme type.
 type TextBoxThemeType struct {
 	Text   termui.Style
 	Cursor termui.Style
 }
 
-// NewTextBox
+// NewTextBox create new text box.
 func NewTextBox() *TextBox {
 	return &TextBox{
 		Block:       *termui.NewBlock(),
@@ -42,7 +42,7 @@ func NewTextBox() *TextBox {
 	}
 }
 
-// Draw
+// Draw implements the Drawable interface.
 func (tb *TextBox) Draw(buf *termui.Buffer) {
 	tb.Block.Draw(buf)
 
@@ -72,7 +72,7 @@ func (tb *TextBox) Draw(buf *termui.Buffer) {
 	}
 }
 
-// Backspace
+// Backspace remove previous char.
 func (tb *TextBox) Backspace() {
 	if tb.cursorPoint == image.Pt(1, 1) {
 		return
@@ -142,22 +142,22 @@ func (tb *TextBox) GetText() string {
 	return text
 }
 
-// MoveCursorLeft
+// MoveCursorLeft move cursor to left.
 func (tb *TextBox) MoveCursorLeft() {
 	tb.MoveCursor(tb.cursorPoint.X-1, tb.cursorPoint.Y)
 }
 
-// MoveCursorRight
+// MoveCursorRight move cursor to right.
 func (tb *TextBox) MoveCursorRight() {
 	tb.MoveCursor(tb.cursorPoint.X+1, tb.cursorPoint.Y)
 }
 
-// MoveCursorUp
+// MoveCursorUp move cursor to up.
 func (tb *TextBox) MoveCursorUp() {
 	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y-1)
 }
 
-// MoveCursorDown
+// MoveCursorDown move cursor to down.
 func (tb *TextBox) MoveCursorDown() {
 	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y+1)
 }
