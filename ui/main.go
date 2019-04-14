@@ -51,6 +51,7 @@ func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker, configUi *co
 	ui.Render()
 }
 
+// Handle keyboard keys.
 func (ui *UI) Handle(key string) {
 	if len(ui.Input.Fields) > 0 {
 		ui.Input.Handle(key)

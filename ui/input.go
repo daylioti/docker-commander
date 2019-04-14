@@ -7,9 +7,11 @@ import (
 )
 
 const (
+	// Border sizes.
 	InputFieldHeight = 3
 )
 
+// Input UI struct.
 type Input struct {
 	ui           *UI
 	Fields       []*commanderWidgets.TextBox
@@ -17,10 +19,12 @@ type Input struct {
 	inputChannel *chan map[string]string
 }
 
+// Initialize input render component.
 func (in *Input) Init(ui *UI) {
 	in.ui = ui
 }
 
+// Handle keyboard keys.
 func (in *Input) Handle(key string) {
 	switch key {
 	case "<Enter>":
@@ -68,10 +72,12 @@ func (in *Input) Handle(key string) {
 	}
 }
 
+// Filter allowed to paste in input field keyboard keys.
 func (in *Input) allowedInput(key string) bool {
 	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>" && key != "<Up>" && key != "<Down>"
 }
 
+// Get input values, using chanel.
 func (in *Input) GetInputValues() {
 	values := make(map[string]string)
 	for _, input := range in.Fields {
@@ -80,6 +86,7 @@ func (in *Input) GetInputValues() {
 	*in.inputChannel <- values
 }
 
+// Create and render input fields.
 func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string) {
 	var i int
 	in.Fields = nil
