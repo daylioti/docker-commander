@@ -5,6 +5,7 @@ import (
 	"image"
 )
 
+// TextBox
 type TextBox struct {
 	termui.Block
 	WrapText    bool
@@ -16,16 +17,19 @@ type TextBox struct {
 	cursorPoint image.Point
 }
 
+// TextBoxTheme
 var TextBoxTheme = TextBoxThemeType{
 	Text:   termui.NewStyle(termui.ColorWhite),
 	Cursor: termui.NewStyle(termui.ColorWhite, termui.ColorClear, termui.ModifierReverse),
 }
 
+// TextBoxThemeType
 type TextBoxThemeType struct {
 	Text   termui.Style
 	Cursor termui.Style
 }
 
+// NewTextBox
 func NewTextBox() *TextBox {
 	return &TextBox{
 		Block:       *termui.NewBlock(),
@@ -38,6 +42,7 @@ func NewTextBox() *TextBox {
 	}
 }
 
+// Draw
 func (tb *TextBox) Draw(buf *termui.Buffer) {
 	tb.Block.Draw(buf)
 
@@ -67,6 +72,7 @@ func (tb *TextBox) Draw(buf *termui.Buffer) {
 	}
 }
 
+// Backspace
 func (tb *TextBox) Backspace() {
 	if tb.cursorPoint == image.Pt(1, 1) {
 		return
@@ -125,6 +131,7 @@ func (tb *TextBox) SetText(input string) {
 	tb.InsertText(input)
 }
 
+// GetText get text from box.
 func (tb *TextBox) GetText() string {
 	var text string
 	for _, r := range tb.text {
@@ -135,22 +142,27 @@ func (tb *TextBox) GetText() string {
 	return text
 }
 
+// MoveCursorLeft
 func (tb *TextBox) MoveCursorLeft() {
 	tb.MoveCursor(tb.cursorPoint.X-1, tb.cursorPoint.Y)
 }
 
+// MoveCursorRight
 func (tb *TextBox) MoveCursorRight() {
 	tb.MoveCursor(tb.cursorPoint.X+1, tb.cursorPoint.Y)
 }
 
+// MoveCursorUp
 func (tb *TextBox) MoveCursorUp() {
 	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y-1)
 }
 
+// MoveCursorDown
 func (tb *TextBox) MoveCursorDown() {
 	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y+1)
 }
 
+// MoveCursor
 func (tb *TextBox) MoveCursor(x, y int) {
 	tb.cursorPoint.Y = termui.MinInt(termui.MaxInt(1, y), len(tb.text))
 	tb.cursorPoint.X = termui.MinInt(termui.MaxInt(1, x), len(tb.text[tb.cursorPoint.Y-1])+1)
