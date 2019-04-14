@@ -19,7 +19,7 @@ type Input struct {
 	inputChannel *chan map[string]string
 }
 
-// Initialize input render component.
+// Init initialize input render component.
 func (in *Input) Init(ui *UI) {
 	in.ui = ui
 }

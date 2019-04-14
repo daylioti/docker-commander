@@ -1,9 +1,8 @@
 package widgets
 
 import (
-	"image"
-
 	. "github.com/gizak/termui/v3"
+	"image"
 )
 
 type TextBox struct {

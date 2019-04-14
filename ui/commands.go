@@ -8,6 +8,7 @@ import (
 	"strconv"
 )
 
+// Commands UI struct.
 type Commands struct {
 	ui           *UI
 	cnf          *config.Config
@@ -15,6 +16,7 @@ type Commands struct {
 	Lists        []*widgets.List
 }
 
+// Init initialize commands render component.
 func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker, ui *UI) {
 	cmd.cnf = cnf
 	cmd.dockerClient = dockerClient
@@ -25,6 +27,7 @@ func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker, ui *U
 	cmd.UpdateRenderElements(cnf)
 }
 
+// Handle keyboard keys.
 func (cmd *Commands) Handle(key string) {
 	switch key {
 	case "<Up>", "K", "k":
@@ -43,17 +46,20 @@ func (cmd *Commands) Handle(key string) {
 	}
 }
 
+// Render function, that render commands component.
 func (cmd *Commands) Render() {
 	for listIndex := 0; listIndex < len(cmd.Lists); listIndex++ {
 		termui.Render(cmd.Lists[listIndex])
 	}
 }
 
+// Focus commands lists, set borders.
 func (cmd *Commands) Focus() {
 	cmd.UpdateRenderElements(cmd.cnf)
 	cmd.Render()
 }
 
+// UnFocus commands lists, remove borders.
 func (cmd *Commands) UnFocus() {
 	for _, list := range cmd.Lists {
 		list.BorderStyle = termui.NewStyle(termui.ColorWhite)
@@ -62,6 +68,7 @@ func (cmd *Commands) UnFocus() {
 	cmd.Render()
 }
 
+// ExecuteSelectedCommand start execution process, open input if needed.
 func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 	if len(cnf.Exec.Input) > 0 {
 		// Wait for input fields.
@@ -79,22 +86,24 @@ func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 	}
 }
 
+// commandExecProcess execute command in docker.
 func (cmd *Commands) commandExecProcess(cnf config.Config) {
 	cnf.Exec.Input = nil
 	id := cmd.ui.Term.GetIDFromPath(cmd.Path(cmd.cnf))
 	term := cmd.ui.Term.NewTerminal(cnf, id)
-	//cmd.ui.Term.DisplayTerminal = term.List
 	cmd.ui.Term.Execute(term)
 }
 
+// SetDockerClient
 func (cmd *Commands) SetDockerClient(client *docker.Docker) {
 	cmd.dockerClient = client
 }
 
-func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
+// getNearestConfigs return nearest from selected configs.
+func (cmd *Commands) getNearestConfigs() (*config.Config, *config.Config, *config.Config, *config.Config) {
+	cnf := cmd.cnf
 	path := cmd.Path(cmd.cnf)
 	var c, cp, cu, cd *config.Config
-	var clear bool
 	cnf.Selected = false
 	c = cnf
 	for i := 0; i <= len(path); i++ {
@@ -112,6 +121,13 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 			c = &c.Config[path[i]]
 		}
 	}
+	return c, cp, cu, cd
+}
+
+// changeSelected change selected, depends on current selected item.
+func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
+	var clear bool
+	c, cp, cu, cd := cmd.getNearestConfigs()
 	if c.Name == "" {
 		return
 	}
@@ -152,6 +168,7 @@ func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
 	}
 }
 
+// getSelected
 func (cmd *Commands) getSelected() config.Config {
 	c := cmd.cnf
 	for _, path := range cmd.Path(cmd.cnf) {
@@ -160,7 +177,7 @@ func (cmd *Commands) getSelected() config.Config {
 	return *c
 }
 
-// Get array with path to selected item.
+// Path get array with path to selected item.
 func (cmd *Commands) Path(cnf *config.Config) []int {
 	var path []int
 	var p []int
