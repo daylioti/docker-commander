@@ -6,7 +6,7 @@ import (
 	"github.com/gizak/termui/v3"
 )
 
-// Main user interface struct.
+// UI main user interface struct.
 type UI struct {
 	configUi *config.UIConfig
 
@@ -31,7 +31,7 @@ type UI struct {
 	ClearRender     bool
 }
 
-// Initialize all render components.
+// Init initialize all render components.
 func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker, configUi *config.UIConfig) {
 	ui.TermWidth, ui.TermHeight = termui.TerminalDimensions()
 
@@ -78,7 +78,7 @@ func (ui *UI) Handle(key string) {
 	}
 }
 
-// Main render function, that render all ui.
+// Render main render function, that render all ui.
 func (ui *UI) Render() {
 	termui.Clear()
 	ui.Cmd.Render()
