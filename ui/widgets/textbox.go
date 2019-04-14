@@ -1,54 +1,54 @@
 package widgets
 
 import (
-	. "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3"
 	"image"
 )
 
 type TextBox struct {
-	Block
+	termui.Block
 	WrapText    bool
-	TextStyle   Style
-	CursorStyle Style
+	TextStyle   termui.Style
+	CursorStyle termui.Style
 	ShowCursor  bool
 	ID          string
-	text        [][]Cell
+	text        [][]termui.Cell
 	cursorPoint image.Point
 }
 
 var TextBoxTheme = TextBoxThemeType{
-	Text:   NewStyle(ColorWhite),
-	Cursor: NewStyle(ColorWhite, ColorClear, ModifierReverse),
+	Text:   termui.NewStyle(termui.ColorWhite),
+	Cursor: termui.NewStyle(termui.ColorWhite, termui.ColorClear, termui.ModifierReverse),
 }
 
 type TextBoxThemeType struct {
-	Text   Style
-	Cursor Style
+	Text   termui.Style
+	Cursor termui.Style
 }
 
 func NewTextBox() *TextBox {
 	return &TextBox{
-		Block:       *NewBlock(),
+		Block:       *termui.NewBlock(),
 		WrapText:    false,
 		TextStyle:   TextBoxTheme.Text,
 		CursorStyle: TextBoxTheme.Cursor,
 
-		text:        [][]Cell{[]Cell{}},
+		text:        [][]termui.Cell{[]termui.Cell{}},
 		cursorPoint: image.Pt(1, 1),
 	}
 }
 
-func (tb *TextBox) Draw(buf *Buffer) {
+func (tb *TextBox) Draw(buf *termui.Buffer) {
 	tb.Block.Draw(buf)
 
 	yCoordinate := 0
 	for _, line := range tb.text {
 		if tb.WrapText {
-			line = WrapCells(line, uint(tb.Inner.Dx()))
+			line = termui.WrapCells(line, uint(tb.Inner.Dx()))
 		}
-		lines := SplitCells(line, '\n')
+		lines := termui.SplitCells(line, '\n')
 		for _, line := range lines {
-			for _, cx := range BuildCellWithXArray(line) {
+			for _, cx := range termui.BuildCellWithXArray(line) {
 				x, cell := cx.X, cx.Cell
 				buf.SetCell(cell, image.Pt(x, yCoordinate).Add(tb.Inner.Min))
 			}
@@ -77,7 +77,7 @@ func (tb *TextBox) Backspace() {
 		tb.text = append(
 			tb.text[:index-1],
 			append(
-				[][]Cell{append(tb.text[index-1], tb.text[index]...)},
+				[][]termui.Cell{append(tb.text[index-1], tb.text[index]...)},
 				tb.text[index+1:len(tb.text)]...,
 			)...,
 		)
@@ -94,14 +94,14 @@ func (tb *TextBox) Backspace() {
 
 // InsertText inserts the given text at the cursor position.
 func (tb *TextBox) InsertText(input string) {
-	cells := ParseStyles(input, tb.TextStyle)
-	lines := SplitCells(cells, '\n')
+	cells := termui.ParseStyles(input, tb.TextStyle)
+	lines := termui.SplitCells(cells, '\n')
 	index := tb.cursorPoint.Y - 1
 	cellsAfterCursor := tb.text[index][tb.cursorPoint.X-1:]
 	tb.text[index] = append(tb.text[index][:tb.cursorPoint.X-1], lines[0]...)
 	for i, line := range lines[1:] {
 		index := tb.cursorPoint.Y + i
-		tb.text = append(tb.text[:index], append([][]Cell{line}, tb.text[index:]...)...)
+		tb.text = append(tb.text[:index], append([][]termui.Cell{line}, tb.text[index:]...)...)
 	}
 	tb.cursorPoint.Y += len(lines) - 1
 	index = tb.cursorPoint.Y - 1
@@ -115,7 +115,7 @@ func (tb *TextBox) InsertText(input string) {
 
 // ClearText clears the text and resets the cursor position.
 func (tb *TextBox) ClearText() {
-	tb.text = [][]Cell{[]Cell{}}
+	tb.text = [][]termui.Cell{[]termui.Cell{}}
 	tb.cursorPoint = image.Pt(1, 1)
 }
 
@@ -152,6 +152,6 @@ func (tb *TextBox) MoveCursorDown() {
 }
 
 func (tb *TextBox) MoveCursor(x, y int) {
-	tb.cursorPoint.Y = MinInt(MaxInt(1, y), len(tb.text))
-	tb.cursorPoint.X = MinInt(MaxInt(1, x), len(tb.text[tb.cursorPoint.Y-1])+1)
+	tb.cursorPoint.Y = termui.MinInt(termui.MaxInt(1, y), len(tb.text))
+	tb.cursorPoint.X = termui.MinInt(termui.MaxInt(1, x), len(tb.text[tb.cursorPoint.Y-1])+1)
 }
