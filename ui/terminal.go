@@ -54,11 +54,11 @@ func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
 	if finished {
 		term.Running = false
 		term.TabItem.Style = termui.NewStyle(termui.ColorRed)
-		//t.UpdateRunningStatus()
 		t.ui.Render()
 	}
+	term.List.SelectedRow = len(term.List.Rows)
 	if term.Active {
-		t.ui.Render()
+		t.DisplayTerminalRender()
 	}
 }
 
@@ -68,27 +68,27 @@ func (t *TerminalUI) Handle(key string) {
 	case "<Up>", "K", "k":
 		if len(t.DisplayTerminal.Rows) > 0 {
 			t.DisplayTerminal.ScrollUp()
-			t.ui.Render()
+			t.DisplayTerminalRender()
 		}
 	case "<Down>", "J", "j":
 		if len(t.DisplayTerminal.Rows) > 0 {
 			t.DisplayTerminal.ScrollDown()
-			t.ui.Render()
+			t.DisplayTerminalRender()
 		}
 	case "<Left>", "H", "h":
 		t.TabPane.FocusLeft()
 		index := t.client.Exec.GetActiveTerminalIndex()
 		if index > 0 {
 			t.SwitchTerminal(t.client.Exec.Terminals[index-1].ID)
+			t.Render()
 		}
-		t.ui.Render()
 	case "<Right>", "L", "l":
 		t.TabPane.FocusRight()
 		index := t.client.Exec.GetActiveTerminalIndex()
 		if index >= 0 && index < len(t.client.Exec.Terminals)-1 {
 			t.SwitchTerminal(t.client.Exec.Terminals[index+1].ID)
+			t.Render()
 		}
-		t.ui.Render()
 	}
 }
 
@@ -114,7 +114,6 @@ func (t *TerminalUI) SwitchTerminal(id string) {
 	}
 	t.UpdateRunningStatus()
 	t.ui.Term.DisplayTerminal.BorderStyle = termui.NewStyle(termui.ColorGreen)
-	termui.Clear()
 	t.ui.Render()
 	t.mux.Unlock()
 }
@@ -181,6 +180,7 @@ func (t *TerminalUI) Execute(term *docker.TerminalRun) {
 // NewTerminal return new terminal object,
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
 	list := widgets.NewList()
+	list.SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
 	return &docker.TerminalRun{
 		TabItem: &commanderWidgets.TabItem{
