@@ -7,7 +7,6 @@ import (
 	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"strconv"
-	"sync"
 )
 
 // TerminalUI UI struct.
@@ -16,21 +15,25 @@ type TerminalUI struct {
 	client          *docker.Docker
 	TabPane         *commanderWidgets.TabsPaneStyled
 	DisplayTerminal *widgets.List
-	mux             sync.Mutex
 }
 
 // Init initialize terminal render component.
 func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 	t.ui = ui
 	t.client = client
-	t.DisplayTerminal = widgets.NewList()
-	t.DisplayTerminal.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
+	t.DisplayTerminal = t.InitDisplayTerminal()
 
 	t.TabPane = commanderWidgets.NewTabPaneStyled()
 	t.TabPane.SetRect(0, t.ui.configUi.GetCommandsHeight(), t.ui.TermWidth, t.ui.configUi.GetCommandsHeight()+3)
 	t.TabPane.Border = true
 
 	t.client.Exec.SetTerminalUpdateFn(t.TerminalUpdate)
+}
+
+func (t *TerminalUI) InitDisplayTerminal() *widgets.List {
+	list := widgets.NewList()
+	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
+	return list
 }
 
 // Render function, that render terminal component.
@@ -79,16 +82,24 @@ func (t *TerminalUI) Handle(key string) {
 		t.TabPane.FocusLeft()
 		index := t.client.Exec.GetActiveTerminalIndex()
 		if index > 0 {
-			t.SwitchTerminal(t.client.Exec.Terminals[index-1].ID)
-			t.Render()
+			t.SwitchTerminal(t.client.Exec.Terminals[index-1])
 		}
 	case "<Right>", "L", "l":
 		t.TabPane.FocusRight()
 		index := t.client.Exec.GetActiveTerminalIndex()
 		if index >= 0 && index < len(t.client.Exec.Terminals)-1 {
-			t.SwitchTerminal(t.client.Exec.Terminals[index+1].ID)
-			t.Render()
+			t.SwitchTerminal(t.client.Exec.Terminals[index+1])
 		}
+	case "<C-r>":
+		index := t.client.Exec.GetActiveTerminalIndex()
+		t.DisplayTerminal = t.InitDisplayTerminal()
+		t.client.Exec.Terminals[index] = t.client.Exec.Terminals[len(t.client.Exec.Terminals)-1]
+		t.client.Exec.Terminals = t.client.Exec.Terminals[:len(t.client.Exec.Terminals)-1]
+		if len(t.client.Exec.Terminals) > 0 {
+			t.client.Exec.Terminals[0].Active = true
+		}
+		t.UpdateRunningStatus()
+		t.ui.Render()
 	}
 }
 
@@ -102,20 +113,13 @@ func (t *TerminalUI) GetIDFromPath(path []int) string {
 }
 
 // SwitchTerminal set selected terminal with id.
-func (t *TerminalUI) SwitchTerminal(id string) {
-	t.mux.Lock()
-	for _, term := range t.client.Exec.Terminals {
-		if term.ID == id {
-			term.Active = true
-			t.DisplayTerminal = term.List
-		} else {
-			term.Active = false
-		}
-	}
+func (t *TerminalUI) SwitchTerminal(term *docker.TerminalRun) {
+	t.unActivateTerminals()
+	term.Active = true
+	t.DisplayTerminal = term.List
 	t.UpdateRunningStatus()
 	t.ui.Term.DisplayTerminal.BorderStyle = termui.NewStyle(termui.ColorGreen)
 	t.ui.Render()
-	t.mux.Unlock()
 }
 
 // Focus commands lists, set borders.
@@ -131,15 +135,6 @@ func (t *TerminalUI) UnFocus() {
 	t.UpdateRunningStatus()
 	t.TabPane.BorderStyle = termui.NewStyle(termui.ColorWhite)
 	t.DisplayTerminal.BorderStyle = termui.NewStyle(termui.ColorWhite)
-	for _, term := range t.client.Exec.Terminals {
-		if term.Active {
-			if term.Running {
-				term.TabItem.Style = termui.NewStyle(termui.ColorGreen)
-			} else {
-				term.TabItem.Style = termui.NewStyle(termui.ColorRed)
-			}
-		}
-	}
 	t.ui.Render()
 }
 
@@ -174,14 +169,43 @@ func (t *TerminalUI) UpdateRunningStatus() {
 func (t *TerminalUI) Execute(term *docker.TerminalRun) {
 	t.client.Exec.Terminals = append(t.client.Exec.Terminals, term)
 	t.client.Exec.CommandRun(term)
-	t.SwitchTerminal(term.ID)
+	t.SwitchTerminal(term)
+}
+
+// removeFinishedTerminals remove first terminal object if finished and length of names bigger that tab width.
+func (t *TerminalUI) removeFinishedTerminals() {
+	var tabItemsLength int
+	tabBorder := 3
+	for _, term := range t.client.Exec.Terminals {
+		tabItemsLength += len(term.TabItem.Name) + tabBorder*2
+	}
+	if tabItemsLength-tabBorder*2 >= t.ui.TermWidth-2 {
+
+		for i, term := range t.client.Exec.Terminals {
+			if !term.Running {
+				t.client.Exec.Terminals[i] = t.client.Exec.Terminals[len(t.client.Exec.Terminals)-1]
+				t.client.Exec.Terminals = t.client.Exec.Terminals[:len(t.client.Exec.Terminals)-1]
+				t.ui.Render()
+				return
+			}
+		}
+	}
+}
+
+// unActivateTerminals set active to false on all terminals.
+func (t *TerminalUI) unActivateTerminals() {
+	for _, term := range t.client.Exec.Terminals {
+		term.Active = false
+	}
 }
 
 // NewTerminal return new terminal object,
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
 	list := widgets.NewList()
-	list.SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
+	list.SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
+	t.removeFinishedTerminals()
+	t.unActivateTerminals()
 	return &docker.TerminalRun{
 		TabItem: &commanderWidgets.TabItem{
 			Name:  config.Name,

@@ -31,10 +31,12 @@ type TerminalRun struct {
 // Function for re-render after receiving some updates from execution command.
 type fn func(*TerminalRun, bool)
 
+// Init initialize exec object.
 func (e *Exec) Init(dockerClient *Docker) {
 	e.dockerClient = dockerClient
 }
 
+// SetTerminalUpdateFn set function for updating terminal list from command output.
 func (e *Exec) SetTerminalUpdateFn(ui fn) {
 	e.updateTerminal = ui
 }
@@ -65,6 +67,10 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 		return
 	}
 	c = HResponse.Conn
+	e.execReadBuffer(term, "[Executed:](fg:green)")
+	e.execReadBuffer(term, "[Dir -> "+term.WorkDir+"](fg:green)")
+	e.execReadBuffer(term, "[Cmd -> "+term.Command+"](fg:green)")
+	e.execReadBuffer(term, "[ContainerId -> "+term.ContainerID+"](fg:green)")
 
 	go func() {
 		for {
@@ -89,8 +95,10 @@ func (e *Exec) execReadBuffer(term *TerminalRun, buf string) {
 }
 
 func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
-	e.execReadBuffer(term, "Finished -> "+term.Command)
-	e.execReadBuffer(term, buf)
+	e.execReadBuffer(term, "[Finished -> "+term.Command+"](fg:green)")
+	if buf != "EOF" {
+		e.execReadBuffer(term, buf)
+	}
 	e.updateTerminal(term, true)
 }
 
@@ -103,6 +111,7 @@ func (e *Exec) GetTerminal(id string) *TerminalRun {
 	return nil
 }
 
+// GetActiveTerminalIndex get array index of active terminal.
 func (e *Exec) GetActiveTerminalIndex() int {
 	for i, term := range e.Terminals {
 		if term.Active {

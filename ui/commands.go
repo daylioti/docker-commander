@@ -63,7 +63,6 @@ func (cmd *Commands) Focus() {
 func (cmd *Commands) UnFocus() {
 	for _, list := range cmd.Lists {
 		list.BorderStyle = termui.NewStyle(termui.ColorWhite)
-		//for _, item := range list.Rows
 	}
 	cmd.Render()
 }
@@ -229,6 +228,7 @@ func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 	return false
 }
 
+// UpdateRenderElements update lists from config.
 func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 	var width, height int
 	if h, exist := cmd.ui.configUi.UI.Commands["height"]; !exist {
@@ -265,15 +265,9 @@ func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 			}
 		}
 		menuList.Border = true
-		//height = len(menuList.Rows) + borderSize
-		//if cmd.MaxHeight < height {
-		//	cmd.MaxHeight = height
-		//}
 		width += borderSize
 		menuList.SetRect(widthPrev, 0, widthPrev+width, height+borderSize)
 		widthPrev += width
 		c = &c.Config[pathIndex]
 	}
-	//cmd.ui.Term.TabPane.SetRect(0, cmd.MaxHeight, cmd.ui.TermWidth, cmd.MaxHeight+3)
-	//cmd.ui.Term.DisplayTerminal.SetRect(0, cmd.MaxHeight+3, cmd.ui.TermWidth, cmd.ui.TermHeight)
 }

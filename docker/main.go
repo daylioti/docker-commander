@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// Docker main structure.
 type Docker struct {
 	client  *client.Client
 	context context.Context
