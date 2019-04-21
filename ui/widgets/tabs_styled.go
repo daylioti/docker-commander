@@ -5,6 +5,7 @@ import (
 	"image"
 )
 
+// TabsPaneStyled widget structure.
 type TabsPaneStyled struct {
 	termui.Block
 	TabNames         []*TabItem
@@ -13,11 +14,13 @@ type TabsPaneStyled struct {
 	InactiveTabStyle termui.Style
 }
 
+// TabItem tab item structure.
 type TabItem struct {
 	Style termui.Style
 	Name  string
 }
 
+// NewTabPaneStyled create new tab widget.
 func NewTabPaneStyled() *TabsPaneStyled {
 	return &TabsPaneStyled{
 		Block:            *termui.NewBlock(),
@@ -26,18 +29,21 @@ func NewTabPaneStyled() *TabsPaneStyled {
 	}
 }
 
+// FocusLeft focus element to left.
 func (tp *TabsPaneStyled) FocusLeft() {
 	if tp.ActiveTabIndex > 0 {
 		tp.ActiveTabIndex--
 	}
 }
 
+// FocusRight focus element to right.
 func (tp *TabsPaneStyled) FocusRight() {
 	if tp.ActiveTabIndex < len(tp.TabNames)-1 {
 		tp.ActiveTabIndex++
 	}
 }
 
+// Draw implements the Drawable interface.
 func (tp *TabsPaneStyled) Draw(buf *termui.Buffer) {
 	tp.Block.Draw(buf)
 
