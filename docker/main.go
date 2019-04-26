@@ -14,15 +14,14 @@ type Docker struct {
 	Exec    *Exec
 }
 
-func (d *Docker) Init(version string, ops ...func(*client.Client) error) {
+func (d *Docker) Init(version string, ops ...client.Opt) {
 	var err error
 	d.context = context.Background()
 	defer d.context.Done()
 	if version != "" {
 		ops = append(ops, client.WithVersion(version))
 	}
-	d.client, err = client.NewClientWithOpts(ops...)
-	if err != nil {
+	if d.client, err = client.NewClientWithOpts(ops...); err != nil {
 		panic(err)
 	}
 	if version == "" {

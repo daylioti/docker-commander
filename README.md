@@ -21,7 +21,7 @@ sudo chmod +x /usr/local/bin/docker-commander
 Option | Description
 --- | ---
 -api-host| docker api host, f.e tcp://127.0.0.1:2376
--api-v | docker api version
+-api-v | docker api version, use this option when you have some troubles with docker api version. 
 -h	| display help dialog
 -c  | path to yml config file
 -v	| output version information and exit
@@ -31,15 +31,17 @@ Option | Description
 Key | Action
 --- | ---
 \<Enter\> | Execute command
-\<Left\>, \<Right\>, \<Up\>, \<Down\>, H, J, K, L  | Menu/terminal controls 
+\<Left\>, \<Right\>, \<Up\>, \<Down\>, H, J, K, L  | Menu list controls 
 \<Tab\> | Switch between terminal and menu
+\<C-r\> | Remove selected process in tab. 
+\<C-v\> | Paste from clipboard to input field.
 q | Quit docker-commander
 
 ## Usage
 
 `docker-commander` requires config file to build menu, default config path - ./config.yml.
  You can also use `-c` param to specify path to yml file or url to download.
-### Docker api
+### Docker host
 By default `docker-commander` tries to find local docker api client or you can specify it with 
 `-api-host` param
  

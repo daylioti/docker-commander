@@ -39,8 +39,8 @@ func (in *Input) Handle(key string) {
 		} else {
 			in.ActiveField++
 		}
-		for i := 0; i < len(in.Fields); i++ {
-			in.Fields[i].BorderStyle = termui.NewStyle(termui.ColorWhite)
+		for _, field := range in.Fields {
+			field.BorderStyle = termui.NewStyle(termui.ColorWhite)
 		}
 		in.Fields[in.ActiveField].BorderStyle = termui.NewStyle(termui.ColorGreen)
 		in.ui.Render()
@@ -67,9 +67,7 @@ func (in *Input) Handle(key string) {
 			in.Fields[in.ActiveField].InsertText(key)
 		}
 	}
-	for i := 0; i < len(in.Fields); i++ {
-		termui.Render(in.Fields[i])
-	}
+	termui.Render(in.Fields[in.ActiveField])
 }
 
 // Filter allowed to paste in input field keyboard keys.
@@ -88,7 +86,7 @@ func (in *Input) GetInputValues() {
 
 // Create and render input fields.
 func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string) {
-	var i int
+	var inputsCount int
 	in.Fields = nil
 	in.inputChannel = cn
 	var box *commanderWidgets.TextBox
@@ -96,11 +94,11 @@ func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string)
 		box = commanderWidgets.NewTextBox()
 		box.Title = title
 		box.ID = id
-		box.SetRect(int(in.ui.TermWidth/4), i*InputFieldHeight, in.ui.TermWidth-int(in.ui.TermWidth/4),
-			i*InputFieldHeight+InputFieldHeight)
+		box.SetRect(int(in.ui.TermWidth/4), inputsCount*InputFieldHeight, in.ui.TermWidth-int(in.ui.TermWidth/4),
+			inputsCount*InputFieldHeight+InputFieldHeight)
 		box.ShowCursor = true
 		in.Fields = append(in.Fields, box)
-		i++
+		inputsCount++
 	}
 	in.Fields[0].BorderStyle = termui.NewStyle(termui.ColorGreen)
 	// Un-focus all other render elements.

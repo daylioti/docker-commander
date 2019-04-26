@@ -82,8 +82,8 @@ func (ui *UI) Render() {
 	ui.Cmd.Render()
 	ui.Term.Render()
 	if len(ui.Input.Fields) > 0 {
-		for fieldIndex := 0; fieldIndex < len(ui.Input.Fields); fieldIndex++ {
-			termui.Render(ui.Input.Fields[fieldIndex])
+		for _, field := range ui.Input.Fields {
+			termui.Render(field)
 		}
 	}
 }

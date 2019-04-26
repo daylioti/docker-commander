@@ -24,7 +24,7 @@ func main() {
 		helpFlag          = flag.Bool("h", false, "display this help dialog")
 		configFileFlag    = flag.String("c", "", "system path to yml config file or url, default - ./config.yml")
 	)
-	var ops []func(*client.Client) error
+	var ops []client.Opt
 	flag.Parse()
 
 	if *versionFlag {

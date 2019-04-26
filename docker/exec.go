@@ -75,8 +75,7 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 	go func() {
 		for {
 			buf := make([]byte, 512)
-			_, err = c.Read(buf)
-			if err != nil {
+			if _, err = c.Read(buf); err != nil {
 				_ = c.Close()
 				e.execReadFinish(term, err.Error())
 				return

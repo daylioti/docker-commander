@@ -180,7 +180,6 @@ func (t *TerminalUI) removeFinishedTerminals() {
 		tabItemsLength += len(term.TabItem.Name) + tabBorder*2
 	}
 	if tabItemsLength-tabBorder*2 >= t.ui.TermWidth-2 {
-
 		for i, term := range t.client.Exec.Terminals {
 			if !term.Running {
 				t.client.Exec.Terminals[i] = t.client.Exec.Terminals[len(t.client.Exec.Terminals)-1]

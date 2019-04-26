@@ -23,14 +23,12 @@ type Config struct {
 func CnfInit(path string, configs ...interface{}) {
 	var err error
 	var data []byte
-	data, err = ioutil.ReadFile(path)
-	if err != nil {
+	if data, err = ioutil.ReadFile(path); err != nil {
 		_, parseErr := url.Parse(path)
 		if parseErr == nil {
 			// Get from url
 			client := &http.Client{Timeout: time.Second}
-			r, responseErr := client.Get(path)
-			if responseErr == nil {
+			if r, responseErr := client.Get(path); responseErr == nil {
 				data, err = ioutil.ReadAll(r.Body)
 				if err != nil {
 					panic(err)
@@ -39,8 +37,7 @@ func CnfInit(path string, configs ...interface{}) {
 		}
 	}
 	for _, cfg := range configs {
-		err = yaml.Unmarshal(data, cfg)
-		if err != nil {
+		if err = yaml.Unmarshal(data, cfg); err != nil {
 			panic(err)
 		}
 	}
@@ -67,8 +64,8 @@ func (cfg *Config) Init() {
 // ChildConfigsPlaceholders replace placeholders in children menu items.
 func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *Config) map[string]string {
 	for i := 0; i < len(c.Config); i++ {
-		for k, v := range c.Placeholders {
-			placeholders[k] = v
+		for key, value := range c.Placeholders {
+			placeholders[key] = value
 		}
 		for key, value := range placeholders {
 			cfg.ReplacePlaceholder(key, value, &c.Config[i])
