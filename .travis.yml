@@ -38,7 +38,6 @@ matrix:
 
 
 
-
 install: true
 
 before_script:
@@ -55,6 +54,7 @@ deploy:
   file_glob: true
   file: "./dist/*"
   skip_cleanup: true
+  draft: true
   on:
     tags: true
 

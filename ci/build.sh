@@ -13,7 +13,7 @@ FILE=${NAME}_${TRAVIS_BRANCH}_${GOOS}_${GOARCH}
 
 tar -czf dist/${FILE}.tgz ${NAME} || ERROR=true
 
-if [ ${ERROR} == "true" ]; then
+if [ "$ERROR" == "true" ]; then
         exit 1
 fi
 
