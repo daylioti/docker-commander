@@ -23,7 +23,7 @@ Option | Description
 -api-host| docker api host, f.e tcp://127.0.0.1:2376
 -api-v | docker api version, use this option when you have some troubles with docker api version. 
 -h	| display help dialog
--c  | path to yml config file
+-c  | path to yml config file or url to download yml.
 -v	| output version information and exit
 
 ### Keybindings
@@ -35,7 +35,9 @@ Key | Action
 \<Tab\> | Switch between terminal and menu
 \<C-r\> | Remove selected process in tab. 
 \<C-v\> | Paste from clipboard to input field.
-q | Quit docker-commander
+\<End\>, \<Home\>, \<PageUp\>, \<PageDown\>, \<MouseWheelDown\>, \<MouseWheelUp\>, \<Up\>, \<Down\> | Scroll command output 
+q, Q | Quit from docker-commander, except opened input popup
+\<C-c\> | Quit from docker-commander from anywhere
 
 ## Usage
 
