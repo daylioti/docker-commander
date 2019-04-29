@@ -33,17 +33,24 @@ func (in *Input) Handle(key string) {
 		in.Fields = nil
 		in.ui.ClearRender = true
 		in.ui.Render()
+		return
 	case "<Tab>":
 		if in.ActiveField+1 >= len(in.Fields) {
 			in.ActiveField = 0
 		} else {
 			in.ActiveField++
 		}
-		for _, field := range in.Fields {
-			field.BorderStyle = termui.NewStyle(termui.ColorWhite)
+		in.Render()
+	case "<Up>":
+		if in.ActiveField != 0 {
+			in.ActiveField--
+			in.Render()
 		}
-		in.Fields[in.ActiveField].BorderStyle = termui.NewStyle(termui.ColorGreen)
-		in.ui.Render()
+	case "<Down>":
+		if in.ActiveField+1 < len(in.Fields) {
+			in.ActiveField++
+			in.Render()
+		}
 	case "<Backspace>":
 		in.Fields[in.ActiveField].Backspace()
 	case "<Space>":
@@ -70,9 +77,20 @@ func (in *Input) Handle(key string) {
 	termui.Render(in.Fields[in.ActiveField])
 }
 
+// Render function, that render input component.
+func (in *Input) Render() {
+	in.Fields[in.ActiveField].BorderStyle = termui.NewStyle(termui.ColorGreen)
+	for i, field := range in.Fields {
+		if i != in.ActiveField {
+			field.BorderStyle = termui.NewStyle(termui.ColorWhite)
+		}
+		termui.Render(field)
+	}
+}
+
 // Filter allowed to paste in input field keyboard keys.
 func (in *Input) allowedInput(key string) bool {
-	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>" && key != "<Up>" && key != "<Down>"
+	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>"
 }
 
 // Get input values, using chanel.

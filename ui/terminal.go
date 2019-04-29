@@ -68,14 +68,34 @@ func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
 // Handle keyboard keys.
 func (t *TerminalUI) Handle(key string) {
 	switch key {
-	case "<Up>", "K", "k":
+	case "<Up>", "K", "k", "<MouseWheelUp>":
 		if len(t.DisplayTerminal.Rows) > 0 {
 			t.DisplayTerminal.ScrollUp()
 			t.DisplayTerminalRender()
 		}
-	case "<Down>", "J", "j":
+	case "<Down>", "J", "j", "<MouseWheelDown>":
 		if len(t.DisplayTerminal.Rows) > 0 {
 			t.DisplayTerminal.ScrollDown()
+			t.DisplayTerminalRender()
+		}
+	case "<PageUp>":
+		if len(t.DisplayTerminal.Rows) > 0 {
+			t.DisplayTerminal.ScrollPageUp()
+			t.DisplayTerminalRender()
+		}
+	case "<PageDown>":
+		if len(t.DisplayTerminal.Rows) > 0 {
+			t.DisplayTerminal.ScrollPageDown()
+			t.DisplayTerminalRender()
+		}
+	case "<Home>":
+		if len(t.DisplayTerminal.Rows) > 0 {
+			t.DisplayTerminal.SelectedRow = 0
+			t.DisplayTerminalRender()
+		}
+	case "<End>":
+		if len(t.DisplayTerminal.Rows) > 0 {
+			t.DisplayTerminal.SelectedRow = len(t.DisplayTerminal.Rows) - 1
 			t.DisplayTerminalRender()
 		}
 	case "<Left>", "H", "h":
@@ -151,9 +171,9 @@ func (t *TerminalUI) UpdateRunningStatus() {
 		terminal = t.client.Exec.Terminals[i]
 		if terminal.Active {
 			if terminal.Running {
-				terminal.TabItem.Style = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+				terminal.TabItem.Style = termui.NewStyle(termui.ColorBlack, termui.ColorGreen)
 			} else {
-				terminal.TabItem.Style = termui.NewStyle(termui.ColorWhite, termui.ColorRed)
+				terminal.TabItem.Style = termui.NewStyle(termui.ColorBlack, termui.ColorRed)
 			}
 			t.SetDisplayTerminal(terminal.List)
 		} else if terminal.Running {
@@ -201,7 +221,7 @@ func (t *TerminalUI) unActivateTerminals() {
 // NewTerminal return new terminal object,
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
 	list := widgets.NewList()
-	list.SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+	list.SelectedRowStyle = termui.NewStyle(termui.ColorBlack, termui.ColorGreen)
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
 	t.removeFinishedTerminals()
 	t.unActivateTerminals()

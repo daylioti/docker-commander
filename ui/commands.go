@@ -254,7 +254,7 @@ func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 			if cnf.Selected {
 				menuList.SelectedRow = len(menuList.Rows)
 				menuList.BorderStyle = termui.NewStyle(termui.ColorGreen)
-				menuList.SelectedRowStyle = termui.NewStyle(termui.ColorWhite, termui.ColorGreen)
+				menuList.SelectedRowStyle = termui.NewStyle(termui.ColorBlack, termui.ColorGreen)
 			} else if !cnf.Selected && len(path) > i && pathIndex == p && i < len(path)-1 {
 				menuList.SelectedRow = len(menuList.Rows)
 				menuList.SelectedRowStyle = termui.NewStyle(termui.ColorGreen)
