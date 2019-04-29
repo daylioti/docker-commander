@@ -9,13 +9,14 @@ import (
 	"strings"
 )
 
-// Main struct for execute commands inside docker containers.
+// Exec - main struct for execute commands inside docker containers.
 type Exec struct {
 	dockerClient   *Docker
 	Terminals      []*TerminalRun
 	updateTerminal fn
 }
 
+// TerminalRun - struct for running commands.
 type TerminalRun struct {
 	TabItem     *commanderWidgets.TabItem // tab item text and styles
 	List        *widgets.List             // list widget with command output
@@ -41,6 +42,7 @@ func (e *Exec) SetTerminalUpdateFn(ui fn) {
 	e.updateTerminal = ui
 }
 
+// CommandRun - execute process in docker container.
 func (e *Exec) CommandRun(term *TerminalRun) {
 	var ExecConfig types.ExecConfig
 	var Response types.IDResponse
@@ -87,27 +89,20 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 	_ = e.dockerClient.client.ContainerExecStart(e.dockerClient.context, Response.ID, types.ExecStartCheck{Tty: true})
 }
 
+// execReadBuffer - paste result rom output buffer to display list.
 func (e *Exec) execReadBuffer(term *TerminalRun, buf string) {
 	if buf != "" {
 		term.List.Rows = append(term.List.Rows, strings.Split(buf, "\n")...)
 	}
 }
 
+// execReadFinish - paste finish info to display list.
 func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
 	e.execReadBuffer(term, "[Finished -> "+term.Command+"](fg:green)")
 	if buf != "EOF" {
 		e.execReadBuffer(term, buf)
 	}
 	e.updateTerminal(term, true)
-}
-
-func (e *Exec) GetTerminal(id string) *TerminalRun {
-	for i := 0; i < len(e.Terminals); i++ {
-		if e.Terminals[i].ID == id {
-			return e.Terminals[i]
-		}
-	}
-	return nil
 }
 
 // GetActiveTerminalIndex get array index of active terminal.
@@ -120,7 +115,7 @@ func (e *Exec) GetActiveTerminalIndex() int {
 	return -1
 }
 
-// Get container id by ContainerName or FromImage or ContainerID params.
+// GetContainerID - get container id by ContainerName or FromImage or ContainerID params.
 func (e *Exec) GetContainerID(config config.Config) string {
 	containers, err := e.dockerClient.client.ContainerList(e.dockerClient.context, types.ContainerListOptions{})
 	if err != nil {

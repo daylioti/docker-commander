@@ -14,6 +14,7 @@ type Docker struct {
 	Exec    *Exec
 }
 
+// Init initialize connection to docker.
 func (d *Docker) Init(version string, ops ...client.Opt) {
 	var err error
 	d.context = context.Background()

@@ -1,5 +1,6 @@
 package config
 
+// ExecConfig docker exec configs (what to execute).
 type ExecConfig struct {
 	Connect    ExecConnect       `yaml:"connect"`
 	Env        []string          `yaml:"env"`     // Environment variables.

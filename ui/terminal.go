@@ -30,6 +30,7 @@ func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 	t.client.Exec.SetTerminalUpdateFn(t.TerminalUpdate)
 }
 
+// InitDisplayTerminal initialize command output list.
 func (t *TerminalUI) InitDisplayTerminal() *widgets.List {
 	list := widgets.NewList()
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)

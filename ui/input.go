@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// Border sizes.
+	// InputFieldHeight - border sizes.
 	InputFieldHeight = 3
 )
 
@@ -62,10 +62,7 @@ func (in *Input) Handle(key string) {
 	case "<C-v>":
 		// @Todo implement clipboard with better way.
 		// It requires additional tools xsel, xclip, wl-clipboard.
-		clip, err := clipboard.ReadAll()
-		if err != nil {
-			break
-		}
+		clip := in.ReadFromClipboard()
 		if clip != "" {
 			in.Fields[in.ActiveField].InsertText(clip)
 		}
@@ -88,7 +85,16 @@ func (in *Input) Render() {
 	}
 }
 
-// Filter allowed to paste in input field keyboard keys.
+// ReadFromClipboard get string from clipboard.
+func (in *Input) ReadFromClipboard() string {
+	clip, err := clipboard.ReadAll()
+	if err != nil {
+		return ""
+	}
+	return clip
+}
+
+// allowedInput - filter allowed to paste in input field keyboard keys.
 func (in *Input) allowedInput(key string) bool {
 	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>"
 }
@@ -102,7 +108,7 @@ func (in *Input) GetInputValues() {
 	*in.inputChannel <- values
 }
 
-// Create and render input fields.
+// NewInputs - create and render input fields.
 func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string) {
 	var inputsCount int
 	in.Fields = nil

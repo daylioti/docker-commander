@@ -162,7 +162,7 @@ func (tb *TextBox) MoveCursorDown() {
 	tb.MoveCursor(tb.cursorPoint.X, tb.cursorPoint.Y+1)
 }
 
-// MoveCursor
+// MoveCursor move cursor to coordinates.
 func (tb *TextBox) MoveCursor(x, y int) {
 	tb.cursorPoint.Y = termui.MinInt(termui.MaxInt(1, y), len(tb.text))
 	tb.cursorPoint.X = termui.MinInt(termui.MaxInt(1, x), len(tb.text[tb.cursorPoint.Y-1])+1)
