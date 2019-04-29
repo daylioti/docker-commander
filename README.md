@@ -7,10 +7,9 @@
 <img src="./_examples/example.gif" ></img>
 
 ## Installation
-Please use `1.0.3` version, master branch have a lot of new features and it not stable.
 
 ```bash
-sudo wget https://github.com/daylioti/docker-commander/releases/download/1.0.3/docker-commander_linux_amd64 -O /usr/local/bin/docker-commander
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.0/docker-commander_1.1.0_linux_amd64.tgz | tar xvz --overwrite -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
