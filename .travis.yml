@@ -15,9 +15,28 @@ env:
 
 matrix:
   include:
-    # Linux
     - env: _GOOS=linux _GOARCH=amd64
       os: linux
+    - env: _GOOS=linux _GOARCH=386
+      os: linux
+    - env: _GOOS=linux _GOARCH=arm
+      os: linux
+    - env: _GOOS=linux _GOARCH=arm64
+      os: linux
+    - env: _GOOS=darwin _GOARCH=386
+      os: osx
+    - env: _GOOS=darwin _GOARCH=amd64
+      os: osx
+    - env: _GOOS=freebsd _GOARCH=amd64
+      os: linux
+    - env: _GOOS=freebsd _GOARCH=arm
+      os: linux
+    - env: _GOOS=windows _GOARCH=386
+      os: windows
+    - env: _GOOS=windows _GOARCH=amd64
+      os: windows
+
+
 
 
 install: true
@@ -27,5 +46,16 @@ before_script:
 
 script:
   - golangci-lint run
+  - ./ci/build.sh
 
 
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file: "./dist/*"
+  skip_cleanup: true
+  on:
+    tags: true
+
+if: tag IS present
