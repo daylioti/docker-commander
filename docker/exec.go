@@ -57,6 +57,7 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 	if term.WorkDir != "" {
 		ExecConfig.WorkingDir = term.WorkDir
 	}
+	ExecConfig.Tty = true
 	Response, err = e.dockerClient.client.ContainerExecCreate(e.dockerClient.context, term.ContainerID, ExecConfig)
 	if err != nil {
 		e.execReadFinish(term, err.Error())

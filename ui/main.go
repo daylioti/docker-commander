@@ -25,8 +25,6 @@ type UI struct {
 
 	// Flag for switching control between menu and terminal area.
 	SelectedRowTerminal bool
-
-	ClearRender bool
 }
 
 // Init initialize all render components.

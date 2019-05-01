@@ -77,7 +77,6 @@ func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 			for k, v := range <-cn {
 				cnf.ReplacePlaceholder(k, v, &cnf)
 			}
-			cmd.ui.ClearRender = true
 			cmd.commandExecProcess(cnf)
 		}()
 	} else {

@@ -37,8 +37,7 @@ func (d *Docker) Init(version string, ops ...client.Opt) {
 			ops = append(ops, client.WithVersion(ping.APIVersion))
 		}
 	}
-	d.client, err = client.NewClientWithOpts(ops...)
-	if err != nil {
+	if d.client, err = client.NewClientWithOpts(ops...); err != nil {
 		panic(err)
 	}
 	d.Exec = &Exec{}

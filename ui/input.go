@@ -31,7 +31,6 @@ func (in *Input) Handle(key string) {
 		in.GetInputValues()
 		in.ui.Cmd.UpdateRenderElements(in.ui.Cmd.cnf)
 		in.Fields = nil
-		in.ui.ClearRender = true
 		in.ui.Render()
 		return
 	case "<Tab>":
@@ -66,6 +65,9 @@ func (in *Input) Handle(key string) {
 		if clip != "" {
 			in.Fields[in.ActiveField].InsertText(clip)
 		}
+	case "<Escape>":
+		in.Fields = nil
+		in.ui.Render()
 	default:
 		if in.allowedInput(key) {
 			in.Fields[in.ActiveField].InsertText(key)
