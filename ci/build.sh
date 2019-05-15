@@ -4,7 +4,7 @@
 GOARCH=${_GOARCH}
 GOOS=${_GOOS}
 
-env GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${NAME} || ERROR=true
+env GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "-X main.version=${TRAVIS_BRANCH}" -o ${NAME} || ERROR=true
 
 mkdir -p dist
 
