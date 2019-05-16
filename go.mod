@@ -5,7 +5,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/atotto/clipboard v0.1.2
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v0.0.0-20190426091530-51f27b1defad
+	github.com/docker/docker v0.0.0-20190515115722-34b56728ed71
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/gizak/termui/v3 v3.0.0
