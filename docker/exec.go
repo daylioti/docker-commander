@@ -2,8 +2,10 @@ package docker
 
 import (
 	"github.com/daylioti/docker-commander/config"
+	"github.com/daylioti/docker-commander/ui/helpers"
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/docker/docker/api/types"
+	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"net"
 	"strings"
@@ -11,6 +13,7 @@ import (
 
 // Exec - main struct for execute commands inside docker containers.
 type Exec struct {
+	Tty            bool
 	dockerClient   *Docker
 	Terminals      []*TerminalRun
 	updateTerminal fn
@@ -57,8 +60,15 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 	if term.WorkDir != "" {
 		ExecConfig.WorkingDir = term.WorkDir
 	}
-	ExecConfig.Tty = true
+	ExecConfig.Tty = e.Tty
 	Response, err = e.dockerClient.client.ContainerExecCreate(e.dockerClient.context, term.ContainerID, ExecConfig)
+	width, height := termui.TerminalDimensions()
+	resize := types.ResizeOptions{
+		Width:  uint(width),
+		Height: uint(height),
+	}
+	_ = e.dockerClient.client.ContainerResize(e.dockerClient.context, term.ContainerID, resize)
+
 	if err != nil {
 		e.execReadFinish(term, err.Error())
 		return
@@ -69,11 +79,12 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 		e.execReadFinish(term, err.Error())
 		return
 	}
+
 	c = HResponse.Conn
-	e.execReadBuffer(term, "[Executed:](fg:green)")
-	e.execReadBuffer(term, "[Dir -> "+term.WorkDir+"](fg:green)")
-	e.execReadBuffer(term, "[Cmd -> "+term.Command+"](fg:green)")
-	e.execReadBuffer(term, "[ContainerId -> "+term.ContainerID+"](fg:green)")
+	e.execReadBuffer(term, "[Executed:](fg:green)", false)
+	e.execReadBuffer(term, "[Dir -> "+term.WorkDir+"](fg:green) ", false)
+	e.execReadBuffer(term, "[Cmd -> "+term.Command+"](fg:green)", false)
+	e.execReadBuffer(term, "[ContainerId -> "+term.ContainerID+"](fg:green)", false)
 
 	go func() {
 		for {
@@ -83,7 +94,7 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 				e.execReadFinish(term, err.Error())
 				return
 			}
-			e.execReadBuffer(term, string(buf))
+			e.execReadBuffer(term, string(buf), ExecConfig.Tty)
 			e.updateTerminal(term, false)
 		}
 	}()
@@ -91,17 +102,28 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 }
 
 // execReadBuffer - paste result rom output buffer to display list.
-func (e *Exec) execReadBuffer(term *TerminalRun, buf string) {
+func (e *Exec) execReadBuffer(term *TerminalRun, buf string, tty bool) {
 	if buf != "" {
-		term.List.Rows = append(term.List.Rows, strings.Split(buf, "\n")...)
+		if tty {
+			var rows []string
+			for _, line := range strings.Split(buf, "\n") {
+				rows = strings.Split(line, "\b\b")
+				if len(rows) > 1 {
+					term.List.Rows = term.List.Rows[:len(term.List.Rows)-1]
+				}
+				term.List.Rows = append(term.List.Rows, string(helpers.TTYColorsParse([]rune(rows[len(rows)-1]))))
+			}
+		} else {
+			term.List.Rows = append(term.List.Rows, strings.Split(buf, "\n")...)
+		}
 	}
 }
 
 // execReadFinish - paste finish info to display list.
 func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
-	e.execReadBuffer(term, "[Finished -> "+term.Command+"](fg:green)")
+	e.execReadBuffer(term, "[Finished -> "+term.Command+"](fg:green)", false)
 	if buf != "EOF" {
-		e.execReadBuffer(term, buf)
+		e.execReadBuffer(term, buf, false)
 	}
 	e.updateTerminal(term, true)
 }

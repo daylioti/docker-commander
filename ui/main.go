@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/daylioti/docker-commander/config"
 	"github.com/daylioti/docker-commander/docker"
+	"github.com/daylioti/docker-commander/ui/helpers"
 	"github.com/gizak/termui/v3"
 )
 
@@ -45,6 +46,8 @@ func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker, configUi *co
 	ui.Input.Init(ui)
 
 	ui.Render()
+
+	termui.StyleParserColorMap = helpers.GetAllTermColors()
 }
 
 // Handle keyboard keys.

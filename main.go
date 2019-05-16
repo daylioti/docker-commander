@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	version = "1.1.1"
+	version = "1.1.2"
 )
 
 func main() {
@@ -20,6 +20,7 @@ func main() {
 	var (
 		clientWithVersion = flag.String("api-v", "", "docker api version")
 		clientWithHost    = flag.String("api-host", "", "docker api host")
+		tty               = flag.Bool("tty", false, "Enable docker exec tty option with parse colors")
 		versionFlag       = flag.Bool("v", false, "output version information and exit")
 		helpFlag          = flag.Bool("h", false, "display this help dialog")
 		configFileFlag    = flag.String("c", "", "system path to yml config file or url, default - ./config.yml")
@@ -50,6 +51,7 @@ func main() {
 	}
 
 	dockerClient.Init(*clientWithHost, ops...)
+	dockerClient.Exec.Tty = *tty
 
 	err := termui.Init()
 	if err != nil {

@@ -9,7 +9,7 @@
 ## Installation
 
 ```bash
-sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.0/docker-commander_1.1.0_linux_amd64.tgz | tar xvz --overwrite -C /usr/local/bin
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.2/docker-commander_1.1.2_linux_amd64.tgz | tar xvz --overwrite -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
@@ -20,7 +20,8 @@ sudo chmod +x /usr/local/bin/docker-commander
 Option | Description
 --- | ---
 -api-host| docker api host, f.e tcp://127.0.0.1:2376
--api-v | docker api version, use this option when you have some troubles with docker api version. 
+-api-v | docker api version, use this option when you have some troubles with docker api version.
+--tty | Enable docker exec tty option with parse colors. 
 -h	| display help dialog
 -c  | path to yml config file or url to download yml.
 -v	| output version information and exit

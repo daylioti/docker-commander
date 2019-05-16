@@ -6,8 +6,8 @@ import (
 	"github.com/gizak/termui/v3"
 )
 
+// InputFieldHeight - border sizes.
 const (
-	// InputFieldHeight - border sizes.
 	InputFieldHeight = 3
 )
 
@@ -72,6 +72,7 @@ func (in *Input) Handle(key string) {
 		if in.allowedInput(key) {
 			in.Fields[in.ActiveField].InsertText(key)
 		}
+		return
 	}
 	termui.Render(in.Fields[in.ActiveField])
 }
