@@ -55,12 +55,12 @@ func (t *TerminalUI) DisplayTerminalRender() {
 
 // TerminalUpdate calls on receive updates from docker process.
 func (t *TerminalUI) TerminalUpdate(term *docker.TerminalRun, finished bool) {
+	term.List.SelectedRow = len(term.List.Rows)
 	if finished {
 		term.Running = false
 		term.TabItem.Style = termui.NewStyle(termui.ColorRed)
 		t.ui.Render()
 	}
-	term.List.SelectedRow = len(term.List.Rows)
 	if term.Active {
 		t.DisplayTerminalRender()
 	}
@@ -203,8 +203,7 @@ func (t *TerminalUI) removeFinishedTerminals() {
 	if tabItemsLength-tabBorder*2 >= t.ui.TermWidth-2 {
 		for i, term := range t.client.Exec.Terminals {
 			if !term.Running {
-				t.client.Exec.Terminals[i] = t.client.Exec.Terminals[len(t.client.Exec.Terminals)-1]
-				t.client.Exec.Terminals = t.client.Exec.Terminals[:len(t.client.Exec.Terminals)-1]
+				t.client.Exec.Terminals = append(t.client.Exec.Terminals[:i], t.client.Exec.Terminals[i+1:]...)
 				t.ui.Render()
 				return
 			}
