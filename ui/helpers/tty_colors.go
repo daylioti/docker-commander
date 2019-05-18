@@ -6,8 +6,13 @@ import (
 	"unicode"
 )
 
-const StyleInit = 91 // [
-const StyleEnd = 109 // m
+// StyleInit - rune for "["
+const StyleInit = 91
+
+// StyleEnd - rune for "m"
+const StyleEnd = 109
+
+// DefaultColor - back to default color rune
 const DefaultColor = 39
 
 // vt100Codes16 codes from https://misc.flogisoft.com/bash/tip_colors_and_formatting

@@ -102,7 +102,7 @@ func (in *Input) allowedInput(key string) bool {
 	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>"
 }
 
-// Get input values, using chanel.
+// GetInputValues - get input values, using chanel.
 func (in *Input) GetInputValues() {
 	values := make(map[string]string)
 	for _, input := range in.Fields {
