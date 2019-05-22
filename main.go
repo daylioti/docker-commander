@@ -49,8 +49,11 @@ func main() {
 	if *clientWithVersion != "" {
 		ops = append(ops, client.WithVersion(*clientWithVersion))
 	}
+	if *clientWithHost != "" {
+		ops = append(ops, client.WithHost(*clientWithHost))
+	}
 
-	dockerClient.Init(*clientWithHost, ops...)
+	dockerClient.Init(*clientWithVersion, ops...)
 	dockerClient.Exec.Tty = *tty
 
 	err := termui.Init()
