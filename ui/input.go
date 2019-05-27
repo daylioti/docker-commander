@@ -68,6 +68,7 @@ func (in *Input) Handle(key string) {
 	case "<Escape>":
 		in.Fields = nil
 		in.ui.Render()
+		return
 	default:
 		if in.allowedInput(key) {
 			in.Fields[in.ActiveField].InsertText(key)
