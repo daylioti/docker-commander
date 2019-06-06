@@ -34,7 +34,6 @@ func (in *Input) Handle(key string) {
 		// Render all ui twice to fix bug with partly rendering old elements.
 		in.ui.Render()
 		in.ui.Render()
-		break
 	case "<Tab>":
 		if in.ActiveField+1 >= len(in.Fields) {
 			in.ActiveField = 0
@@ -42,35 +41,28 @@ func (in *Input) Handle(key string) {
 			in.ActiveField++
 		}
 		in.Render()
-		break
 	case "<Up>":
 		if in.ActiveField != 0 {
 			in.ActiveField--
 			in.Render()
 		}
-		break
 	case "<Down>":
 		if in.ActiveField+1 < len(in.Fields) {
 			in.ActiveField++
 			in.Render()
 		}
-		break
 	case "<Backspace>":
 		in.Fields[in.ActiveField].Backspace()
 		termui.Render(in.Fields[in.ActiveField])
-		break
 	case "<Space>":
 		in.Fields[in.ActiveField].InsertText(" ")
 		termui.Render(in.Fields[in.ActiveField])
-		break
 	case "<Left>":
 		in.Fields[in.ActiveField].MoveCursorLeft()
 		termui.Render(in.Fields[in.ActiveField])
-		break
 	case "<Right>":
 		in.Fields[in.ActiveField].MoveCursorRight()
 		termui.Render(in.Fields[in.ActiveField])
-		break
 	case "<C-v>":
 		// @Todo implement clipboard with better way.
 		// It requires additional tools xsel, xclip, wl-clipboard.
@@ -79,11 +71,9 @@ func (in *Input) Handle(key string) {
 			in.Fields[in.ActiveField].InsertText(clip)
 		}
 		termui.Render(in.Fields[in.ActiveField])
-		break
 	case "<Escape>":
 		in.Fields = nil
 		in.ui.Render()
-		break
 	default:
 		if in.allowedInput(key) {
 			in.Fields[in.ActiveField].InsertText(key)
