@@ -9,7 +9,7 @@
 ## Installation
 
 ```bash
-sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.3/docker-commander_1.1.3_linux_amd64.tgz | sudo tar xvz --overwrite -C /usr/local/bin
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.4/docker-commander_1.1.4_linux_amd64.tgz | sudo tar xvz --overwrite -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
