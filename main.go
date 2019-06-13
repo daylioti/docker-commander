@@ -19,7 +19,7 @@ func main() {
 
 	var (
 		clientWithVersion = flag.String("api-v", "", "docker api version")
-		clientWithHost    = flag.String("api-host", "", "docker api host")
+		clientWithHost    = flag.String("api-host", "", "docker api host. Example: tcp://127.0.0.1:2376")
 		tty               = flag.Bool("tty", false, "Enable docker exec tty option with parse colors")
 		versionFlag       = flag.Bool("v", false, "output version information and exit")
 		helpFlag          = flag.Bool("h", false, "display this help dialog")
