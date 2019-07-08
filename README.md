@@ -8,8 +8,14 @@
 
 ## Installation
 
+### Linux
 ```bash
 sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.4/docker-commander_1.1.4_linux_amd64.tgz | sudo tar xvz --overwrite -C /usr/local/bin
+sudo chmod +x /usr/local/bin/docker-commander
+```
+### MacOS
+```bash
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.4/docker-commander_1.1.4_darwin_amd64.tgz | sudo tar xvz -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
@@ -56,21 +62,24 @@ By default `docker-commander` tries to find local docker api client or you can s
       config:
       - name: "item with command"
         exec: # it just example.
+          connect:
+            container_image: "flatland-site-reactjs-public"
           workdir: "/usr/src/site"
-          from_image: "flatland-site-reactjs-public"
           cmd: "npm run-script start"
       - name: "item"
         config:
         - name: "item2"
           exec:
-            from_image: "ubuntu"
+            connect:
+              container_image: "ubuntu"
             workdir: "/var"
             cmd: "ls -lah"      
   - name: "menu item 2"
     config:
     - name: "another child menu item 2"
       exec:
-        from_image: "ubuntu"
+        connect:
+          container_image: "ubuntu"
         cmd: "ls -lah /var"
   ```
   Configuration of menu can be with any depth, yml support anchors for some optimizations
