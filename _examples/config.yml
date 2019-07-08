@@ -4,23 +4,42 @@
 
 ubuntu: &ubuntu
   connect:
-    from_image: ubuntu
-
+    container_image: ubuntu
 
 config:
-
-  - name: "group 1"
+  - name: group 1
     config:
 
-      - name: "command 1"
+      - name: command 1
         exec:
           <<: *ubuntu
           cmd: ls -lah
 
-  - name: "group 2"
+  - name: group 2
     config:
-
-      - name: "command 2"
+      - name: command 2
         exec:
           <<: *ubuntu
           cmd: ls -lah /var
+
+  - name: group variables
+    placeholders:
+      some_variable: some value
+    config:
+      - name: variables 1
+        exec:
+          <<: *ubuntu
+          cmd: echo @some_variable
+
+      - name: variables input
+        exec:
+          <<: *ubuntu
+          cmd: echo @input_field @some_variable
+          input:
+            input_field: Type something...
+
+  - name: wait 5 sec
+    exec:
+      <<: *ubuntu
+      cmd: sleep 5
+
