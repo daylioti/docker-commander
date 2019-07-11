@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	version = "1.1.2"
+	version = "1.1.5"
 )
 
 func main() {
@@ -41,6 +41,7 @@ func main() {
 	if *configFileFlag == "" {
 		*configFileFlag = "./config.yml"
 	}
+	*configFileFlag = "/home/daylioti/jysk/j2/config-test.yml"
 	dockerClient := &docker.Docker{}
 	Cnf := &config.Config{}
 	CnfUi := &config.UIConfig{}

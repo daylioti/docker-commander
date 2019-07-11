@@ -72,22 +72,25 @@ func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *C
 		}
 		cfg.ChildConfigsPlaceholders(placeholders, &c.Config[i])
 	}
+	for key, value := range c.Placeholders {
+		cfg.ReplacePlaceholder(key, value, c)
+	}
 	return placeholders
 }
 
 // ReplacePlaceholder replace placeholders in all available fields.
 func (cfg *Config) ReplacePlaceholder(placeholder string, value string, c *Config) {
-	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, 1)
-	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, 1)
-	c.Exec.Connect.ContainerID = strings.Replace(c.Exec.Connect.ContainerID, "@"+placeholder, value, 1)
-	c.Exec.Cmd = strings.Replace(c.Exec.Cmd, "@"+placeholder, value, 1)
+	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, -1)
+	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, -1)
+	c.Exec.Connect.ContainerID = strings.Replace(c.Exec.Connect.ContainerID, "@"+placeholder, value, -1)
+	c.Exec.Cmd = strings.Replace(c.Exec.Cmd, "@"+placeholder, value, -1)
 	for i := 0; i < len(c.Exec.Env); i++ {
-		c.Exec.Env[i] = strings.Replace(c.Exec.Env[i], "@"+placeholder, value, 1)
+		c.Exec.Env[i] = strings.Replace(c.Exec.Env[i], "@"+placeholder, value, -1)
 	}
 	for k, v := range c.Placeholders {
-		c.Placeholders[k] = strings.Replace(v, "@"+placeholder, value, 1)
+		c.Placeholders[k] = strings.Replace(v, "@"+placeholder, value, -1)
 	}
 	for k, v := range c.Exec.Input {
-		c.Exec.Input[k] = strings.Replace(v, "@"+placeholder, value, 1)
+		c.Exec.Input[k] = strings.Replace(v, "@"+placeholder, value, -1)
 	}
 }
