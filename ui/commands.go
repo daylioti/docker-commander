@@ -71,14 +71,7 @@ func (cmd *Commands) UnFocus() {
 func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
 	if len(cnf.Exec.Input) > 0 {
 		// Wait for input fields.
-		cn := make(chan map[string]string)
-		cmd.ui.Input.NewInputs(cnf.Exec.Input, &cn)
-		go func() {
-			for k, v := range <-cn {
-				cnf.ReplacePlaceholder(k, v, &cnf)
-			}
-			cmd.commandExecProcess(cnf)
-		}()
+		cmd.ui.Input.NewInputs(cnf.Exec.Input, cnf)
 	} else {
 		cmd.commandExecProcess(cnf)
 	}

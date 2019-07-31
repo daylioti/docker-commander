@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -31,9 +33,16 @@ func CnfInit(path string, configs ...interface{}) {
 			if r, responseErr := client.Get(path); responseErr == nil {
 				data, err = ioutil.ReadAll(r.Body)
 				if err != nil {
-					panic(err)
+					fmt.Printf("Can't open config from %v", path)
+					os.Exit(0)
 				}
+			} else {
+				fmt.Printf("Can't open config from %v", path)
+				os.Exit(0)
 			}
+		} else {
+			fmt.Printf("Can't open config from %v", path)
+			os.Exit(0)
 		}
 	}
 	for _, cfg := range configs {

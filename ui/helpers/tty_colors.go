@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/gizak/termui/v3"
 	"strconv"
 	"unicode"
@@ -12,11 +13,17 @@ const StyleInit = 91
 // StyleEnd - rune for "m"
 const StyleEnd = 109
 
+// StyleAttrLength - means length of "[m"
+const StyleAttrLength = 2
+
+// StyleMinLength - means length of ["2"m
+const StyleMinLength = 1
+
 // DefaultColor - back to default color rune
-const DefaultColor = 39
+var resetStyle = []byte{39, 0, 1, 2, 4, 5, 7, 8, 22}
 
 // vt100Codes16 codes from https://misc.flogisoft.com/bash/tip_colors_and_formatting
-var vt100Codes16 = map[rune]string{
+var vt100Codes16 = map[byte]string{
 	30: "fg:black",
 	31: "fg:red",
 	32: "fg:green",
@@ -54,50 +61,91 @@ func GetAllTermColors() map[string]termui.Color {
 	return colors
 }
 
-// TTYColorsParse replace tty colors to termui.
-func TTYColorsParse(buffer []rune) []rune {
-	var style string
-	var styleRune rune
+// TTYColorsParse - convert ANSI colors to termui.
+func TTYColorsParse(buff []byte) []byte {
+	var index int
+	var styleByte byte
+	var styleLength int
+	var step int
 	var exist bool
-	for bufferIndex := 0; bufferIndex < len(buffer); bufferIndex++ {
-		if buffer[bufferIndex] == StyleInit {
-			switch {
-			case !exist && len(buffer) > bufferIndex+1 && buffer[bufferIndex+1] == StyleInit:
-				// Remove [
-				buffer = append(buffer[:bufferIndex], buffer[bufferIndex+1:]...)
-
-			case len(buffer) > bufferIndex+3 && buffer[bufferIndex+3] == StyleEnd:
-				styleRune = convertStyleRune([]rune{buffer[bufferIndex+1], buffer[bufferIndex+2]})
-				if styleRune == DefaultColor {
-					if exist {
-						buffer = append(buffer[:bufferIndex], append([]rune("]("+style+")"), buffer[bufferIndex+4:]...)...)
+	var style string
+	var replace []byte
+	for {
+		if len(buff) < index+StyleMinLength+StyleAttrLength || len(buff) <= 6 || index < 0 {
+			return buff
+		}
+		if len(buff) > index+StyleAttrLength && buff[index] == StyleInit && unicode.IsNumber(rune(buff[index+1])) {
+			// Possible style.
+			if len(buff) > index+StyleAttrLength {
+				if buff[index+StyleAttrLength] == StyleEnd {
+					styleByte = convertStyleByte([]byte{buff[index+1]})
+					styleLength = 1
+				}
+				if unicode.IsNumber(rune(buff[index+2])) {
+					if len(buff) > index+3 && buff[index+3] == StyleEnd {
+						styleByte = convertStyleByte([]byte{buff[index+1], buff[index+2]})
+						styleLength = 2
+					} else if len(buff) > index+4 && unicode.IsNumber(rune(buff[index+3])) && buff[index+4] == StyleEnd {
+						styleByte = convertStyleByte([]byte{buff[index+1], buff[index+2], buff[index+3]})
+						styleLength = 3
+					}
+				}
+				if !isReset(styleByte) {
+					style, exist = vt100Codes16[styleByte]
+					if exist && len(buff) > index+styleLength+7 {
+						// 7 means minimum length of closing style.
+						// Replace start ANSI style to termui start style byte.
+						replace = []byte(string(commanderWidgets.TokenBeginStyledText))
+						buff = append(buff[:index+styleLength-StyleAttrLength], append(replace, buff[index+styleLength+StyleAttrLength:]...)...)
+						index += len(replace) - styleLength
 					} else {
-						buffer = append(buffer[:bufferIndex], buffer[bufferIndex+4:]...)
+						// Style not in list, remove them.
+						if len(buff) < index+styleLength+StyleAttrLength {
+							step = 1
+						} else {
+							step = 2
+						}
+						buff = append(buff[:index], buff[index+styleLength+step:]...)
+						index -= styleLength + step
 					}
 				} else {
-					buffer = append(buffer[:bufferIndex+1], buffer[bufferIndex+4:]...)
+					if exist {
+						replace = []byte(string(commanderWidgets.TokenEndStyledText) + string(commanderWidgets.TokenBeginStyle) + style + string(commanderWidgets.TokenEndStyle))
+						// Paste termui style.
+						buff = append(buff[:index+styleLength-StyleAttrLength], append(replace, buff[index+styleLength+StyleAttrLength:]...)...)
+						index += len(replace)
+					} else {
+						// Remove reset chars.
+						if len(buff) < index+styleLength+StyleAttrLength {
+							step = 1
+						} else {
+							step = 2
+						}
+						buff = append(buff[:index], buff[index+styleLength+step:]...)
+						index -= styleLength + step
+					}
+					style = ""
+					exist = false
 				}
-				style, exist = vt100Codes16[styleRune]
-				if !exist && styleRune != DefaultColor && len(buffer) > bufferIndex+1 {
-					buffer = append(buffer[:bufferIndex], buffer[bufferIndex+1:]...)
-				}
-
-			case len(buffer) > bufferIndex+3 && buffer[bufferIndex+2] == StyleEnd && unicode.IsNumber(buffer[bufferIndex+1]):
-				buffer = append(buffer[:bufferIndex], buffer[bufferIndex+3:]...)
-
-			default:
-				buffer = append(buffer[:bufferIndex], buffer[bufferIndex+1:]...)
 			}
-		} else if exist && buffer[bufferIndex] == ']' {
-			buffer = append(buffer[:bufferIndex], buffer[bufferIndex+1:]...)
 		}
+		index++
 	}
-	return buffer
 }
 
-// convertStyleRune convert color code to int32 format.
-func convertStyleRune(style []rune) rune {
+// isReset check for closing style byte.
+func isReset(checkByte byte) bool {
+	for _, reset := range resetStyle {
+		if checkByte == reset {
+			return true
+		}
+	}
+	return false
+}
+
+// convertStyleRune convert color code to int8 format.
+func convertStyleByte(style []byte) byte {
 	var result int64
-	result, _ = strconv.ParseInt(string(style), 10, 32)
-	return int32(result)
+	result, _ = strconv.ParseInt(string(style), 10, 8)
+	return byte(result)
 }

@@ -6,14 +6,16 @@ import (
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/docker/docker/api/types"
 	"github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
 	"net"
 	"strings"
 )
 
+const bufferReadSize = 512
+
 // Exec - main struct for execute commands inside docker containers.
 type Exec struct {
 	Tty            bool
+	Color          bool
 	dockerClient   *Docker
 	Terminals      []*TerminalRun
 	updateTerminal fn
@@ -21,9 +23,9 @@ type Exec struct {
 
 // TerminalRun - struct for running commands.
 type TerminalRun struct {
-	TabItem     *commanderWidgets.TabItem // tab item text and styles
-	List        *widgets.List             // list widget with command output
-	Active      bool                      // opened tab or not
+	TabItem     *commanderWidgets.TabItem      // tab item text and styles
+	List        *commanderWidgets.TerminalList // list widget with command output
+	Active      bool                           // opened tab or not
 	Command     string
 	Running     bool
 	ContainerID string
@@ -81,20 +83,20 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 	}
 
 	c = HResponse.Conn
-	e.execReadBuffer(term, "[Executed:](fg:green)", false)
-	e.execReadBuffer(term, "[Dir -> "+term.WorkDir+"](fg:green) ", false)
-	e.execReadBuffer(term, "[Cmd -> "+term.Command+"](fg:green)", false)
-	e.execReadBuffer(term, "[ContainerId -> "+term.ContainerID+"](fg:green)", false)
+	e.execReadBuffer(term, []byte(commanderWidgets.StyleText("Executed:", "fg:green")), false)
+	e.execReadBuffer(term, []byte(commanderWidgets.StyleText("Dir -> "+term.WorkDir, "fg:green")), false)
+	e.execReadBuffer(term, []byte(commanderWidgets.StyleText("Cmd -> "+term.Command, "fg:green")), false)
+	e.execReadBuffer(term, []byte(commanderWidgets.StyleText("ContainerId -> "+term.ContainerID, "fg:green")), false)
 
 	go func() {
 		for {
-			buf := make([]byte, 512)
-			if _, err = c.Read(buf); err != nil {
+			b := make([]byte, bufferReadSize)
+			if _, err = c.Read(b); err != nil {
 				_ = c.Close()
 				e.execReadFinish(term, err.Error())
 				return
 			}
-			e.execReadBuffer(term, string(buf), ExecConfig.Tty)
+			e.execReadBuffer(term, b, e.Color)
 			e.updateTerminal(term, false)
 		}
 	}()
@@ -102,28 +104,30 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 }
 
 // execReadBuffer - paste result rom output buffer to display list.
-func (e *Exec) execReadBuffer(term *TerminalRun, buf string, tty bool) {
-	if buf != "" {
-		if tty {
+func (e *Exec) execReadBuffer(term *TerminalRun, buff []byte, color bool) {
+	if len(buff) > 0 {
+		if color {
 			var rows []string
-			for _, line := range strings.Split(buf, "\n") {
+			for _, line := range strings.Split(string(buff), "\n") {
 				rows = strings.Split(line, "\b\b")
-				if len(rows) > 1 {
+				if len(rows) >= 1 && strings.Contains(line, "\b\b") {
+					// Remove prev line
 					term.List.Rows = term.List.Rows[:len(term.List.Rows)-1]
 				}
-				term.List.Rows = append(term.List.Rows, string(helpers.TTYColorsParse([]rune(rows[len(rows)-1]))))
+				line = string(helpers.TTYColorsParse([]byte(rows[len(rows)-1])))
+				term.List.Rows = append(term.List.Rows, line)
 			}
 		} else {
-			term.List.Rows = append(term.List.Rows, strings.Split(buf, "\n")...)
+			term.List.Rows = append(term.List.Rows, strings.Split(string(buff), "\n")...)
 		}
 	}
 }
 
 // execReadFinish - paste finish info to display list.
 func (e *Exec) execReadFinish(term *TerminalRun, buf string) {
-	e.execReadBuffer(term, "[Finished -> "+term.Command+"](fg:green)", false)
+	e.execReadBuffer(term, []byte(commanderWidgets.StyleText("Finished -> "+term.Command, "fg:green")), false)
 	if buf != "EOF" {
-		e.execReadBuffer(term, buf, false)
+		e.execReadBuffer(term, []byte(buf), e.Color)
 	}
 	e.updateTerminal(term, true)
 }
