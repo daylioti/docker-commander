@@ -12,18 +12,18 @@ import (
 )
 
 var (
-	version = "1.1.5"
+	version = "1.1.6"
 )
 
 func main() {
 
 	var (
-		clientWithVersion = flag.String("api-v", "", "docker api version")
-		clientWithHost    = flag.String("api-host", "", "docker api host. Example: tcp://127.0.0.1:2376")
-		tty               = flag.Bool("tty", false, "Enable docker exec tty option with parse colors")
-		versionFlag       = flag.Bool("v", false, "output version information and exit")
-		helpFlag          = flag.Bool("h", false, "display this help dialog")
-		configFileFlag    = flag.String("c", "", "system path to yml config file or url, default - ./config.yml")
+		configFileFlag = flag.String("c", "", "system path to yml config file or url, default - ./config.yml")
+		clientWithHost = flag.String("api-host", "", "docker api host. Example: tcp://127.0.0.1:2376")
+		tty            = flag.Bool("tty", false, "enable docker exec tty option")
+		color          = flag.Bool("color", false, "display ANSI colors in command output.")
+		versionFlag    = flag.Bool("v", false, "output version information and exit")
+		helpFlag       = flag.Bool("h", false, "display this help dialog")
 	)
 	var ops []client.Opt
 	flag.Parse()
@@ -41,20 +41,18 @@ func main() {
 	if *configFileFlag == "" {
 		*configFileFlag = "./config.yml"
 	}
+
 	dockerClient := &docker.Docker{}
 	Cnf := &config.Config{}
 	CnfUi := &config.UIConfig{}
 	config.CnfInit(*configFileFlag, Cnf, CnfUi)
 	Cnf.Init()
-	if *clientWithVersion != "" {
-		ops = append(ops, client.WithVersion(*clientWithVersion))
-	}
 	if *clientWithHost != "" {
 		ops = append(ops, client.WithHost(*clientWithHost))
 	}
-
-	dockerClient.Init(*clientWithVersion, ops...)
+	dockerClient.Init(ops...)
 	dockerClient.Exec.Tty = *tty
+	dockerClient.Exec.Color = *color
 
 	err := termui.Init()
 	if err != nil {

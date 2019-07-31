@@ -25,9 +25,9 @@ sudo chmod +x /usr/local/bin/docker-commander
 
 Option | Description
 --- | ---
--api-host| docker api host, f.e tcp://127.0.0.1:2376
--api-v | docker api version, use this option when you have some troubles with docker api version.
---tty | Enable docker exec tty option with parse colors. 
+-api-host| docker api host. Example: tcp://127.0.0.1:2376
+--tty | enable docker exec tty option.
+--color | display ANSI colors in command output.
 -h	| display help dialog
 -c  | path to yml config file or url to download yml.
 -v	| output version information and exit
@@ -52,6 +52,21 @@ q, Q | Quit from docker-commander, except opened input popup
 ### Docker host
 By default `docker-commander` tries to find local docker api client or you can specify it with 
 `-api-host` param
+
+### Input field
+Input field works like placeholder but with possibility for user to set variable manually.
+```yaml
+- name: input field
+  exec:
+    connect:
+      container_name: ubuntu
+    cmd: echo @input1
+    input:
+      input1: Type something.
+``` 
+On execute this command docker-commander will display popup into which you can enter your values.
+
+Paste from clipboard - you should install one of those packages xsel, xclip, wl-clipboard
  
 ### Config file
  ```yaml

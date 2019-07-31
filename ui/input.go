@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/atotto/clipboard"
+	"github.com/daylioti/docker-commander/config"
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/gizak/termui/v3"
 )
@@ -13,10 +14,10 @@ const (
 
 // Input UI struct.
 type Input struct {
-	ui           *UI
-	Fields       []*commanderWidgets.TextBox
-	ActiveField  int
-	inputChannel *chan map[string]string
+	ui          *UI
+	Fields      []*commanderWidgets.TextBox
+	ActiveField int
+	cnf         config.Config
 }
 
 // Init initialize input render component.
@@ -28,12 +29,15 @@ func (in *Input) Init(ui *UI) {
 func (in *Input) Handle(key string) {
 	switch key {
 	case "<Enter>":
-		in.GetInputValues()
+		values := in.GetInputValues()
+		for k, v := range values {
+			in.cnf.ReplacePlaceholder(k, v, &in.cnf)
+		}
+		in.ui.Cmd.commandExecProcess(in.cnf)
 		in.ui.Cmd.UpdateRenderElements(in.ui.Cmd.cnf)
 		in.Fields = nil
-		// Render all ui twice to fix bug with partly rendering old elements.
 		in.ui.Render()
-		in.ui.Render()
+
 	case "<Tab>":
 		if in.ActiveField+1 >= len(in.Fields) {
 			in.ActiveField = 0
@@ -108,19 +112,19 @@ func (in *Input) allowedInput(key string) bool {
 }
 
 // GetInputValues - get input values, using chanel.
-func (in *Input) GetInputValues() {
+func (in *Input) GetInputValues() map[string]string {
 	values := make(map[string]string)
 	for _, input := range in.Fields {
 		values[input.ID] = input.GetText()
 	}
-	*in.inputChannel <- values
+	return values
 }
 
 // NewInputs - create and render input fields.
-func (in *Input) NewInputs(inputs map[string]string, cn *chan map[string]string) {
+func (in *Input) NewInputs(inputs map[string]string, cnf config.Config) {
 	var inputsCount int
 	in.Fields = nil
-	in.inputChannel = cn
+	in.cnf = cnf
 	var box *commanderWidgets.TextBox
 	for id, title := range inputs {
 		box = commanderWidgets.NewTextBox()

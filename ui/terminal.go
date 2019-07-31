@@ -5,7 +5,6 @@ import (
 	"github.com/daylioti/docker-commander/docker"
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
 	"strconv"
 )
 
@@ -14,7 +13,7 @@ type TerminalUI struct {
 	ui              *UI
 	client          *docker.Docker
 	TabPane         *commanderWidgets.TabsPaneStyled
-	DisplayTerminal *widgets.List
+	DisplayTerminal *commanderWidgets.TerminalList
 }
 
 // Init initialize terminal render component.
@@ -31,8 +30,8 @@ func (t *TerminalUI) Init(ui *UI, client *docker.Docker) {
 }
 
 // InitDisplayTerminal initialize command output list.
-func (t *TerminalUI) InitDisplayTerminal() *widgets.List {
-	list := widgets.NewList()
+func (t *TerminalUI) InitDisplayTerminal() *commanderWidgets.TerminalList {
+	list := commanderWidgets.NewTerminalList()
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
 	return list
 }
@@ -160,7 +159,7 @@ func (t *TerminalUI) UnFocus() {
 }
 
 // SetDisplayTerminal change display terminal.
-func (t *TerminalUI) SetDisplayTerminal(term *widgets.List) {
+func (t *TerminalUI) SetDisplayTerminal(term *commanderWidgets.TerminalList) {
 	t.DisplayTerminal = term
 }
 
@@ -220,7 +219,7 @@ func (t *TerminalUI) unActivateTerminals() {
 
 // NewTerminal return new terminal object,
 func (t *TerminalUI) NewTerminal(config config.Config, id string) *docker.TerminalRun {
-	list := widgets.NewList()
+	list := commanderWidgets.NewTerminalList()
 	list.SelectedRowStyle = termui.NewStyle(termui.ColorBlack, termui.ColorGreen)
 	list.SetRect(0, t.ui.configUi.GetCommandsHeight()+3, t.ui.TermWidth, t.ui.TermHeight)
 	t.removeFinishedTerminals()
