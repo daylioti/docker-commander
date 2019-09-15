@@ -1,10 +1,14 @@
-package ui
+package commands
 
 import (
 	"github.com/atotto/clipboard"
+	"github.com/daylioti/docker-commander/ui/render_lock"
+	"github.com/gizak/termui/v3"
+)
+
+import (
 	"github.com/daylioti/docker-commander/config"
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
-	"github.com/gizak/termui/v3"
 )
 
 // InputFieldHeight - border sizes.
@@ -14,15 +18,10 @@ const (
 
 // Input UI struct.
 type Input struct {
-	ui          *UI
 	Fields      []*commanderWidgets.TextBox
+	Commands    *Commands
 	ActiveField int
 	cnf         config.Config
-}
-
-// Init initialize input render component.
-func (in *Input) Init(ui *UI) {
-	in.ui = ui
 }
 
 // Handle keyboard keys.
@@ -33,10 +32,10 @@ func (in *Input) Handle(key string) {
 		for k, v := range values {
 			in.cnf.ReplacePlaceholder(k, v, &in.cnf)
 		}
-		in.ui.Cmd.commandExecProcess(in.cnf)
-		in.ui.Cmd.UpdateRenderElements(in.ui.Cmd.cnf)
+		in.Commands.Menu.commandExecProcess(in.cnf)
+		in.Commands.Menu.UpdateRenderElements(in.Commands.Cnf)
 		in.Fields = nil
-		in.ui.Render()
+		in.Commands.RenderAll()
 
 	case "<Tab>":
 		if in.ActiveField+1 >= len(in.Fields) {
@@ -57,16 +56,16 @@ func (in *Input) Handle(key string) {
 		}
 	case "<Backspace>":
 		in.Fields[in.ActiveField].Backspace()
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	case "<Space>":
 		in.Fields[in.ActiveField].InsertText(" ")
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	case "<Left>":
 		in.Fields[in.ActiveField].MoveCursorLeft()
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	case "<Right>":
 		in.Fields[in.ActiveField].MoveCursorRight()
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	case "<C-v>":
 		// @Todo implement clipboard with better way.
 		// It requires additional tools xsel, xclip, wl-clipboard.
@@ -74,15 +73,15 @@ func (in *Input) Handle(key string) {
 		if clip != "" {
 			in.Fields[in.ActiveField].InsertText(clip)
 		}
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	case "<Escape>":
 		in.Fields = nil
-		in.ui.Render()
+		in.Commands.RenderAll()
 	default:
 		if in.allowedInput(key) {
 			in.Fields[in.ActiveField].InsertText(key)
 		}
-		termui.Render(in.Fields[in.ActiveField])
+		render_lock.RenderLock(in.Fields[in.ActiveField])
 	}
 }
 
@@ -93,7 +92,7 @@ func (in *Input) Render() {
 		if i != in.ActiveField {
 			field.BorderStyle = termui.NewStyle(termui.ColorWhite)
 		}
-		termui.Render(field)
+		render_lock.RenderLock(field)
 	}
 }
 
@@ -130,7 +129,7 @@ func (in *Input) NewInputs(inputs map[string]string, cnf config.Config) {
 		box = commanderWidgets.NewTextBox()
 		box.Title = title
 		box.ID = id
-		box.SetRect(int(in.ui.TermWidth/4), inputsCount*InputFieldHeight, in.ui.TermWidth-int(in.ui.TermWidth/4),
+		box.SetRect(int(in.Commands.TermWidth/4), inputsCount*InputFieldHeight, in.Commands.TermWidth-int(in.Commands.TermWidth/4),
 			inputsCount*InputFieldHeight+InputFieldHeight)
 		box.ShowCursor = true
 		in.Fields = append(in.Fields, box)
@@ -138,10 +137,10 @@ func (in *Input) NewInputs(inputs map[string]string, cnf config.Config) {
 	}
 	in.Fields[0].BorderStyle = termui.NewStyle(termui.ColorGreen)
 	// Un-focus all other render elements.
-	for _, list := range in.ui.Cmd.Lists {
+	for _, list := range in.Commands.Menu.Lists {
 		list.BorderStyle = termui.NewStyle(termui.ColorWhite)
 	}
 	termui.Clear()
-	in.ui.Cmd.UnFocus()
-	in.ui.Term.UnFocus()
+	in.Commands.Menu.UnFocus()
+	in.Commands.Terminal.UnFocus()
 }

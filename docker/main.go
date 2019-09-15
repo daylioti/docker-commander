@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"github.com/docker/docker/api"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"strconv"
 )
@@ -12,6 +13,7 @@ type Docker struct {
 	client  *client.Client
 	context context.Context
 	Exec    *Exec
+	Ping    types.Ping
 }
 
 // Init initialize connection to docker.

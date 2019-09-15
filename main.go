@@ -3,16 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/daylioti/docker-commander/config"
 	"github.com/daylioti/docker-commander/docker"
 	"github.com/daylioti/docker-commander/ui"
+	"github.com/daylioti/docker-commander/version"
 	"github.com/docker/docker/client"
 	"github.com/gizak/termui/v3"
-	"os"
-)
-
-var (
-	version = "1.1.6"
 )
 
 func main() {
@@ -29,7 +27,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Println(version)
+		fmt.Println(version.Version)
 		os.Exit(0)
 	}
 
@@ -67,7 +65,7 @@ func main() {
 	for e := range uiEvents {
 		switch e.ID {
 		case "q", "<C-c>", "Q":
-			if len(UI.Input.Fields) > 0 && e.ID != "<C-c>" {
+			if len(UI.Commands.Input.Fields) > 0 && e.ID != "<C-c>" {
 				UI.Handle(e.ID)
 			} else {
 				return

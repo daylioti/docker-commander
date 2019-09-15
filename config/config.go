@@ -46,6 +46,7 @@ func CnfInit(path string, configs ...interface{}) {
 		}
 	}
 	for _, cfg := range configs {
+		data = []byte(os.ExpandEnv(string(data)))
 		if err = yaml.Unmarshal(data, cfg); err != nil {
 			panic(err)
 		}

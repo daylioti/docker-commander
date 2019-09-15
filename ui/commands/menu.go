@@ -1,99 +1,94 @@
-package ui
+package commands
 
 import (
 	"github.com/daylioti/docker-commander/config"
 	"github.com/daylioti/docker-commander/docker"
+	"github.com/daylioti/docker-commander/ui/render_lock"
 	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"strconv"
 )
 
 // Commands UI struct.
-type Commands struct {
-	ui           *UI
-	cnf          *config.Config
-	dockerClient *docker.Docker
+type Menu struct {
+	DockerClient *docker.Docker
+	Commands     *Commands
 	Lists        []*widgets.List
 }
 
 // Init initialize commands render component.
-func (cmd *Commands) Init(cnf *config.Config, dockerClient *docker.Docker, ui *UI) {
-	cmd.cnf = cnf
-	cmd.dockerClient = dockerClient
-	cmd.ui = ui
-
-	cmd.updateStatus(cmd.cnf, cmd.Path(cmd.cnf))
-
-	cmd.UpdateRenderElements(cnf)
+func (m *Menu) Init() {
+	m.updateStatus(m.Commands.Cnf, m.Path(m.Commands.Cnf))
+	m.UpdateRenderElements(m.Commands.Cnf)
 }
 
 // Handle keyboard keys.
-func (cmd *Commands) Handle(key string) {
+func (m *Menu) Handle(key string) {
 	switch key {
 	case "<Up>", "K", "k":
-		cmd.changeSelected(0, -1, cmd.cnf)
+		m.changeSelected(0, -1, m.Commands.Cnf)
 	case "<Left>", "H", "h":
-		cmd.changeSelected(-1, 0, cmd.cnf)
+		m.changeSelected(-1, 0, m.Commands.Cnf)
 	case "<Right>", "L", "l":
-		cmd.changeSelected(1, 0, cmd.cnf)
+		m.changeSelected(1, 0, m.Commands.Cnf)
 	case "<Down>", "J", "j":
-		cmd.changeSelected(0, 1, cmd.cnf)
+		m.changeSelected(0, 1, m.Commands.Cnf)
 	case "<Enter>":
-		selected := cmd.getSelected()
+		selected := m.getSelected()
 		if selected.Exec.Cmd != "" {
-			cmd.ExecuteSelectedCommand(selected)
+			m.ExecuteSelectedCommand(selected)
 		}
 	}
 }
 
 // Render function, that render commands component.
-func (cmd *Commands) Render() {
-	for listIndex := 0; listIndex < len(cmd.Lists); listIndex++ {
-		termui.Render(cmd.Lists[listIndex])
+func (m *Menu) Render() {
+	for listIndex := 0; listIndex < len(m.Lists); listIndex++ {
+		render_lock.RenderLock(m.Lists[listIndex])
 	}
 }
 
 // Focus commands lists, set borders.
-func (cmd *Commands) Focus() {
-	cmd.UpdateRenderElements(cmd.cnf)
-	cmd.Render()
+func (m *Menu) Focus() {
+	m.UpdateRenderElements(m.Commands.Cnf)
+	m.Render()
 }
 
 // UnFocus commands lists, remove borders.
-func (cmd *Commands) UnFocus() {
-	for _, list := range cmd.Lists {
+func (m *Menu) UnFocus() {
+	for _, list := range m.Lists {
 		list.BorderStyle = termui.NewStyle(termui.ColorWhite)
 	}
-	cmd.Render()
+	m.Render()
 }
 
 // ExecuteSelectedCommand start execution process, open input if needed.
-func (cmd *Commands) ExecuteSelectedCommand(cnf config.Config) {
+func (m *Menu) ExecuteSelectedCommand(cnf config.Config) {
 	if len(cnf.Exec.Input) > 0 {
 		// Wait for input fields.
-		cmd.ui.Input.NewInputs(cnf.Exec.Input, cnf)
+		m.Commands.Input.NewInputs(cnf.Exec.Input, cnf)
 	} else {
-		cmd.commandExecProcess(cnf)
+		m.commandExecProcess(cnf)
 	}
 }
 
 // commandExecProcess execute command in docker.
-func (cmd *Commands) commandExecProcess(cnf config.Config) {
+func (m *Menu) commandExecProcess(cnf config.Config) {
 	cnf.Exec.Input = nil
-	id := cmd.ui.Term.GetIDFromPath(cmd.Path(cmd.cnf))
-	term := cmd.ui.Term.NewTerminal(cnf, id)
-	cmd.ui.Term.Execute(term)
+	id := m.Commands.Terminal.GetIDFromPath(m.Path(m.Commands.Cnf))
+	term := m.Commands.Terminal.NewTerminal(cnf, id)
+	m.Commands.Terminal.Execute(term)
 }
 
 // SetDockerClient
-func (cmd *Commands) SetDockerClient(client *docker.Docker) {
-	cmd.dockerClient = client
+func (m *Menu) SetDockerClient(client *docker.Docker) {
+	m.DockerClient = client
 }
 
 // getNearestConfigs return nearest from selected configs.
-func (cmd *Commands) getNearestConfigs() (*config.Config, *config.Config, *config.Config, *config.Config) {
-	cnf := cmd.cnf
-	path := cmd.Path(cmd.cnf)
+func (m *Menu) getNearestConfigs() (*config.Config, *config.Config, *config.Config, *config.Config) {
+	cnf := m.Commands.Cnf
+	path := m.Path(m.Commands.Cnf)
 	var c, cp, cu, cd *config.Config
 	cnf.Selected = false
 	c = cnf
@@ -117,7 +112,7 @@ func (cmd *Commands) getNearestConfigs() (*config.Config, *config.Config, *confi
 
 // changeCommandsSelected change selected in cnf struct, depends on current selected item.
 // return bool - requires re-render or not.
-func (cmd *Commands) changeCommandsSelected(x, y int, c, cp, cu, cd *config.Config) bool {
+func (m *Menu) changeCommandsSelected(x, y int, c, cp, cu, cd *config.Config) bool {
 	switch {
 	case x == 1 && c.Config != nil:
 		c.Selected = false
@@ -144,41 +139,39 @@ func (cmd *Commands) changeCommandsSelected(x, y int, c, cp, cu, cd *config.Conf
 }
 
 // changeSelected change selected, depends on current selected item.
-func (cmd *Commands) changeSelected(x int, y int, cnf *config.Config) {
-	c, cp, cu, cd := cmd.getNearestConfigs()
+func (m *Menu) changeSelected(x int, y int, cnf *config.Config) {
+	c, cp, cu, cd := m.getNearestConfigs()
 	if c.Name == "" {
 		return
 	}
-
-	clear := cmd.changeCommandsSelected(x, y, c, cp, cu, cd)
-
-	cmd.updateStatus(cnf, cmd.Path(cnf))
-	cmd.UpdateRenderElements(cmd.cnf)
+	clear := m.changeCommandsSelected(x, y, c, cp, cu, cd)
+	m.updateStatus(cnf, m.Path(cnf))
+	m.UpdateRenderElements(m.Commands.Cnf)
 	if !clear {
 		// No new elements and elements to remove.
 		// Just render command lists
-		cmd.Render()
+		m.Render()
 	} else {
 		// Re-render all.
 		termui.Clear()
-		cmd.ui.Render()
+		m.Commands.RenderAll()
 	}
 }
 
 // getSelected
-func (cmd *Commands) getSelected() config.Config {
-	c := cmd.cnf
-	for _, path := range cmd.Path(cmd.cnf) {
+func (m *Menu) getSelected() config.Config {
+	c := m.Commands.Cnf
+	for _, path := range m.Path(m.Commands.Cnf) {
 		c = &c.Config[path]
 	}
 	return *c
 }
 
 // Path get array with path to selected item.
-func (cmd *Commands) Path(cnf *config.Config) []int {
+func (m *Menu) Path(cnf *config.Config) []int {
 	var path []int
 	var p []int
-	cmd.getSelectedPath(&path, cnf)
+	m.getSelectedPath(&path, cnf)
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] > 0 {
 			p = append(p, path[i]-1)
@@ -188,7 +181,7 @@ func (cmd *Commands) Path(cnf *config.Config) []int {
 }
 
 // Update Status (display flag) prop in commands structure, depends on current selected item.
-func (cmd *Commands) updateStatus(cnf *config.Config, path []int) {
+func (m *Menu) updateStatus(cnf *config.Config, path []int) {
 	if len(path) == 0 {
 		return
 	}
@@ -202,17 +195,17 @@ func (cmd *Commands) updateStatus(cnf *config.Config, path []int) {
 	if len(path) == 1 {
 		cnf.Selected = true
 	} else {
-		cmd.updateStatus(cnf, path[1:])
+		m.updateStatus(cnf, path[1:])
 	}
 }
 
 // Get selected item path via int array
-func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
+func (m *Menu) getSelectedPath(path *[]int, cnf *config.Config) bool {
 	if cnf.Selected {
 		return true
 	}
 	for i := 0; i < len(cnf.Config); i++ {
-		if cmd.getSelectedPath(path, &cnf.Config[i]) {
+		if m.getSelectedPath(path, &cnf.Config[i]) {
 			*path = append(*path, i+1)
 			return true
 		}
@@ -221,9 +214,9 @@ func (cmd *Commands) getSelectedPath(path *[]int, cnf *config.Config) bool {
 }
 
 // UpdateRenderElements update lists from config.
-func (cmd *Commands) UpdateRenderElements(c *config.Config) {
+func (m *Menu) UpdateRenderElements(c *config.Config) {
 	var width, height int
-	if h, exist := cmd.ui.configUi.UI.Commands["height"]; !exist {
+	if h, exist := m.Commands.ConfigUi.UI.Commands["height"]; !exist {
 		height = 5
 	} else {
 		height, _ = strconv.Atoi(h)
@@ -232,15 +225,15 @@ func (cmd *Commands) UpdateRenderElements(c *config.Config) {
 	var menuList *widgets.List
 	borderSize := 2
 	widthPrev := 0
-	path := append(cmd.Path(cmd.cnf), 0)
-	cmd.Lists = nil
+	path := append(m.Path(m.Commands.Cnf), 0)
+	m.Lists = nil
 	for i, pathIndex := range path {
 		if len(c.Config) <= pathIndex {
 			break
 		}
 		width = 0
-		cmd.Lists = append(cmd.Lists, widgets.NewList())
-		menuList = cmd.Lists[i]
+		m.Lists = append(m.Lists, widgets.NewList())
+		menuList = m.Lists[i]
 		menuList.SelectedRow = 0
 		for p, cnf := range c.Config {
 			if cnf.Selected {

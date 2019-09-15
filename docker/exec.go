@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const bufferReadSize = 512
+const bufferReadSize = 1024
 
 // Exec - main struct for execute commands inside docker containers.
 type Exec struct {
@@ -30,6 +30,7 @@ type TerminalRun struct {
 	Running     bool
 	ContainerID string
 	ID          string // based on selected item path in menu
+	ExecID      string // Docker Exec instance ID
 	Name        string
 	WorkDir     string
 }
@@ -101,6 +102,7 @@ func (e *Exec) CommandRun(term *TerminalRun) {
 		}
 	}()
 	_ = e.dockerClient.client.ContainerExecStart(e.dockerClient.context, Response.ID, types.ExecStartCheck{Tty: true})
+	term.ExecID = Response.ID
 }
 
 // execReadBuffer - paste result rom output buffer to display list.
