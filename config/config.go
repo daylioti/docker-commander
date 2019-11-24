@@ -101,6 +101,7 @@ func (cfg *Config) ReplacePlaceholder(placeholder string, value string, c *Confi
 		c.Placeholders[k] = strings.Replace(v, "@"+placeholder, value, -1)
 	}
 	for k, v := range c.Exec.Input {
-		c.Exec.Input[k] = strings.Replace(v, "@"+placeholder, value, -1)
+		c.Exec.Input[k].Key = strings.Replace(fmt.Sprintf("%v", v.Key), "@"+placeholder, value, -1)
+		c.Exec.Input[k].Value = strings.Replace(fmt.Sprintf("%v", v.Value), "@"+placeholder, value, -1)
 	}
 }

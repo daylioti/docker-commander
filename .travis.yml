@@ -27,10 +27,6 @@ matrix:
       os: osx
     - env: _GOOS=darwin _GOARCH=amd64
       os: osx
-    - env: _GOOS=freebsd _GOARCH=amd64
-      os: linux
-    - env: _GOOS=freebsd _GOARCH=arm
-      os: linux
     - env: _GOOS=windows _GOARCH=386
       os: windows
     - env: _GOOS=windows _GOARCH=amd64
@@ -42,6 +38,7 @@ install: true
 
 before_script:
   - go install github.com/golangci/golangci-lint/cmd/golangci-lint
+  - ./ci/install_upx.sh
 
 script:
   - golangci-lint run

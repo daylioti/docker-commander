@@ -12,7 +12,7 @@ type RenderLockStruct struct {
 var Lock = RenderLockStruct{}
 
 func RenderLock(items ...termui.Drawable) {
-    Lock.mu.Lock()
+	Lock.mu.Lock()
 	termui.Render(items...)
-    Lock.mu.Unlock()
+	Lock.mu.Unlock()
 }

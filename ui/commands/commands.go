@@ -27,19 +27,23 @@ type Commands struct {
 }
 
 func (cmd *Commands) Init() {
-	cmd.Menu = &Menu{
-		DockerClient: cmd.DockerClient,
-		Commands:     cmd,
+	if cmd.Menu == nil {
+		cmd.Menu = &Menu{
+			DockerClient: cmd.DockerClient,
+			Commands:     cmd,
+		}
 	}
 	cmd.Menu.Init()
-
-	cmd.Terminal = &Terminal{
-		Commands: cmd,
+    if cmd.Terminal == nil {
+		cmd.Terminal = &Terminal{
+			Commands: cmd,
+		}
 	}
 	cmd.Terminal.Init()
-
-	cmd.Input = &Input{
-		Commands: cmd,
+    if cmd.Input == nil {
+		cmd.Input = &Input{
+			Commands: cmd,
+		}
 	}
 }
 

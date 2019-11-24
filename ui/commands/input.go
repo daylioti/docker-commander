@@ -1,9 +1,11 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/atotto/clipboard"
 	"github.com/daylioti/docker-commander/ui/render_lock"
 	"github.com/gizak/termui/v3"
+	"gopkg.in/yaml.v2"
 )
 
 import (
@@ -107,7 +109,7 @@ func (in *Input) ReadFromClipboard() string {
 
 // allowedInput - filter allowed to paste in input field keyboard keys.
 func (in *Input) allowedInput(key string) bool {
-	return key != "<MouseLeft>" && key != "<MouseRelease>" && key != "<MouseRight>"
+	return len(key) == 1
 }
 
 // GetInputValues - get input values, using chanel.
@@ -120,16 +122,16 @@ func (in *Input) GetInputValues() map[string]string {
 }
 
 // NewInputs - create and render input fields.
-func (in *Input) NewInputs(inputs map[string]string, cnf config.Config) {
+func (in *Input) NewInputs(inputs yaml.MapSlice, cnf config.Config) {
 	var inputsCount int
 	in.Fields = nil
 	in.cnf = cnf
 	var box *commanderWidgets.TextBox
-	for id, title := range inputs {
+	for _, title := range inputs {
 		box = commanderWidgets.NewTextBox()
-		box.Title = title
-		box.ID = id
-		box.SetRect(int(in.Commands.TermWidth/4), inputsCount*InputFieldHeight, in.Commands.TermWidth-int(in.Commands.TermWidth/4),
+		box.Title = fmt.Sprintf("%v", title.Value)
+		box.ID = fmt.Sprintf("%v", title.Key)
+		box.SetRect(in.Commands.TermWidth/4, inputsCount*InputFieldHeight, in.Commands.TermWidth-in.Commands.TermWidth/4,
 			inputsCount*InputFieldHeight+InputFieldHeight)
 		box.ShowCursor = true
 		in.Fields = append(in.Fields, box)

@@ -11,7 +11,6 @@ import (
 
 // TerminalUI UI struct.
 type Terminal struct {
-	//ui              *UI
 	TabPane         *commanderWidgets.TabsPaneStyled
 	DisplayTerminal *commanderWidgets.TerminalList
 	Commands        *Commands
@@ -19,9 +18,14 @@ type Terminal struct {
 
 // Init initialize terminal render component.
 func (t *Terminal) Init() {
-	t.DisplayTerminal = t.InitDisplayTerminal()
-
-	t.TabPane = commanderWidgets.NewTabPaneStyled()
+	if t.DisplayTerminal == nil {
+		t.DisplayTerminal = t.InitDisplayTerminal()
+	}
+	t.DisplayTerminal.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight()+3,
+		t.Commands.TermWidth, t.Commands.TermHeight)
+	if t.TabPane == nil {
+		t.TabPane = commanderWidgets.NewTabPaneStyled()
+	}
 	t.TabPane.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight(),
 		t.Commands.TermWidth, t.Commands.ConfigUi.GetCommandsHeight()+3)
 

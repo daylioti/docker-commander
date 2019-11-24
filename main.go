@@ -39,7 +39,6 @@ func main() {
 	if *configFileFlag == "" {
 		*configFileFlag = "./config.yml"
 	}
-
 	dockerClient := &docker.Docker{}
 	Cnf := &config.Config{}
 	CnfUi := &config.UIConfig{}
@@ -64,6 +63,8 @@ func main() {
 	uiEvents := termui.PollEvents()
 	for e := range uiEvents {
 		switch e.ID {
+		case "<MouseLeft>", "<MouseRight>", "<MouseMiddle>", "<MouseRelease>":
+			continue
 		case "q", "<C-c>", "Q":
 			if len(UI.Commands.Input.Fields) > 0 && e.ID != "<C-c>" {
 				UI.Handle(e.ID)
@@ -72,10 +73,7 @@ func main() {
 			}
 
 		case "<Resize>":
-			payload := e.Payload.(termui.Resize)
-			UI.TermHeight = payload.Height
-			UI.TermWidth = payload.Width
-			UI.Render()
+			UI.Init(Cnf, dockerClient, CnfUi)
 		default:
 			UI.Handle(e.ID)
 		}
