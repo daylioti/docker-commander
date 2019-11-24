@@ -41,7 +41,7 @@ before_script:
   - ./ci/install_upx.sh
 
 script:
-  - golangci-lint run
+  - golangci-lint run --timeout=30m
   - ./ci/build.sh
 
 
