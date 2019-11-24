@@ -10,12 +10,12 @@
 
 ### Linux
 ```bash
-sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.7/docker-commander_1.1.7_linux_amd64.tgz | sudo tar xvz --overwrite -C /usr/local/bin
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.8/docker-commander_1.1.8_linux_amd64.tgz | sudo tar xvz --overwrite -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 ### MacOS
 ```bash
-sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.7/docker-commander_1.1.7_darwin_amd64.tgz | sudo tar xvz -C /usr/local/bin
+sudo wget -qO- https://github.com/daylioti/docker-commander/releases/download/1.1.8/docker-commander_1.1.8_darwin_amd64.tgz | sudo tar xvz -C /usr/local/bin
 sudo chmod +x /usr/local/bin/docker-commander
 ```
 
