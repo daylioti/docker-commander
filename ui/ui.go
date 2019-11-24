@@ -19,8 +19,6 @@ type UI struct {
 	Commands *commands.Commands
 	// Flag for switching control between menu and terminal area.
 	SelectedMenu byte
-
-	onRender bool
 }
 
 // Init initialize all render components.

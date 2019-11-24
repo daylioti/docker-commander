@@ -25,3 +25,5 @@ if [ "${_GOOS}" == "windows" ]; then
   unzip upx.zip
   cp upx*/upx .
 fi
+
+ls -lah
