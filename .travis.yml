@@ -36,13 +36,11 @@ matrix:
 
 install: true
 
-before_script:
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
-  - ./ci/install_upx.sh
-
 script:
-  - golangci-lint run --timeout=30m
+  - ./ci/install_upx.sh
   - ./ci/build.sh
+  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
+  - golangci-lint run --timeout=30m
 
 
 deploy:
