@@ -77,7 +77,10 @@ func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *C
 		for key, value := range c.Placeholders {
 			placeholders[key] = value
 		}
-		for key, value := range placeholders {
+		for key, value := range c.Config[i].Placeholders {
+			placeholders[key] = value
+		}
+		for key, value := range placeholders  {
 			cfg.ReplacePlaceholder(key, value, &c.Config[i])
 		}
 		cfg.ChildConfigsPlaceholders(placeholders, &c.Config[i])
