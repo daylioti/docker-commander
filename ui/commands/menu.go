@@ -68,6 +68,8 @@ func (m *Menu) ExecuteSelectedCommand(cnf config.Config) {
 		// Wait for input fields.
 		m.Commands.Input.NewInputs(cnf.Exec.Input, cnf)
 	} else {
+		placeholders := m.Commands.Cnf.GetPlaceholders(m.Path(m.Commands.Cnf), make(map[string]string), m.Commands.Cnf)
+		m.Commands.Cnf.ReplacePlaceholders(placeholders, &cnf)
 		m.commandExecProcess(cnf)
 	}
 }

@@ -55,8 +55,6 @@ func CnfInit(path string, configs ...interface{}) {
 
 // Init set default selected items, replace placeholders.
 func (cfg *Config) Init() {
-	cfg.ChildConfigsPlaceholders(make(map[string]string), cfg)
-
 	// Set default config data.
 	cfg.Status = true
 	cfg.Config[0].Selected = true
@@ -71,40 +69,58 @@ func (cfg *Config) Init() {
 	}
 }
 
-// ChildConfigsPlaceholders replace placeholders in children menu items.
-func (cfg *Config) ChildConfigsPlaceholders(placeholders map[string]string, c *Config) map[string]string {
-	for i := 0; i < len(c.Config); i++ {
-		for key, value := range c.Placeholders {
-			placeholders[key] = value
-		}
-		for key, value := range c.Config[i].Placeholders {
-			placeholders[key] = value
-		}
-		for key, value := range placeholders  {
-			cfg.ReplacePlaceholder(key, value, &c.Config[i])
-		}
-		cfg.ChildConfigsPlaceholders(placeholders, &c.Config[i])
+// ReplacePlaceholders replace placeholders for config.
+func (cfg *Config) ReplacePlaceholders(placeholders map[string]string, c *Config) {
+	for k, v := range placeholders {
+		cfg.ReplacePlaceholder(k, v, c)
 	}
+}
+
+// GetPlaceholders all placeholders for selected config.
+func (cfg *Config) GetPlaceholders(path []int, placeholders map[string]string, c *Config) map[string]string {
+	if len(path) < 1 {
+		return cfg.mergePlaceholders(c, placeholders)
+	}
+	return cfg.GetPlaceholders(path[1:],  cfg.mergePlaceholders(c, placeholders), &c.Config[path[0]])
+}
+
+// mergePlaceholders
+func (cfg *Config) mergePlaceholders(c *Config, placeholders map[string]string) map[string]string {
 	for key, value := range c.Placeholders {
-		cfg.ReplacePlaceholder(key, value, c)
+		for k, v := range placeholders {
+			cfg.Replace(&value, k, v)
+		}
+		placeholders[key] = value
 	}
 	return placeholders
 }
 
+// Replace replace placeholder strings.
+func (cfg *Config) Replace(str *string, placeholder string, value string) {
+	*str = strings.Replace(*str, "@"+placeholder, value, -1)
+	*str = strings.Replace(*str, "["+placeholder+"]", value, -1)
+}
+
 // ReplacePlaceholder replace placeholders in all available fields.
 func (cfg *Config) ReplacePlaceholder(placeholder string, value string, c *Config) {
-	c.Exec.WorkingDir = strings.Replace(c.Exec.WorkingDir, "@"+placeholder, value, -1)
-	c.Exec.Connect.FromImage = strings.Replace(c.Exec.Connect.FromImage, "@"+placeholder, value, -1)
-	c.Exec.Connect.ContainerID = strings.Replace(c.Exec.Connect.ContainerID, "@"+placeholder, value, -1)
-	c.Exec.Cmd = strings.Replace(c.Exec.Cmd, "@"+placeholder, value, -1)
+	cfg.Replace(&c.Exec.WorkingDir, placeholder, value)
+	cfg.Replace(&c.Exec.Connect.FromImage, placeholder, value)
+	cfg.Replace(&c.Exec.Connect.ContainerID, placeholder, value)
+	cfg.Replace(&c.Exec.Cmd, placeholder, value)
 	for i := 0; i < len(c.Exec.Env); i++ {
-		c.Exec.Env[i] = strings.Replace(c.Exec.Env[i], "@"+placeholder, value, -1)
+		cfg.Replace(&c.Exec.Env[i], placeholder, value)
 	}
+	replacedPlaceholders := make(map[string]string)
 	for k, v := range c.Placeholders {
-		c.Placeholders[k] = strings.Replace(v, "@"+placeholder, value, -1)
+		cfg.Replace(&k, placeholder, value)
+		cfg.Replace(&v, placeholder, value)
+		replacedPlaceholders[k] = v
 	}
+	c.Placeholders = replacedPlaceholders
 	for k, v := range c.Exec.Input {
 		c.Exec.Input[k].Key = strings.Replace(fmt.Sprintf("%v", v.Key), "@"+placeholder, value, -1)
+		c.Exec.Input[k].Key = strings.Replace(fmt.Sprintf("%v", v.Key), "["+placeholder+"]", value, -1)
 		c.Exec.Input[k].Value = strings.Replace(fmt.Sprintf("%v", v.Value), "@"+placeholder, value, -1)
+		c.Exec.Input[k].Value = strings.Replace(fmt.Sprintf("%v", v.Value), "["+placeholder+"]", value, -1)
 	}
 }

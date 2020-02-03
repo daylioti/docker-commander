@@ -30,10 +30,9 @@ type Input struct {
 func (in *Input) Handle(key string) {
 	switch key {
 	case "<Enter>":
-		values := in.GetInputValues()
-		for k, v := range values {
-			in.cnf.ReplacePlaceholder(k, v, &in.cnf)
-		}
+		in.Commands.Cnf.ReplacePlaceholders(in.GetInputValues(), &in.cnf)
+		placeholders :=  in.Commands.Cnf.GetPlaceholders(in.Commands.Menu.Path(in.Commands.Cnf), make(map[string]string), in.Commands.Cnf)
+		in.Commands.Cnf.ReplacePlaceholders(placeholders, &in.cnf)
 		in.Commands.Menu.commandExecProcess(in.cnf)
 		in.Commands.Menu.UpdateRenderElements(in.Commands.Cnf)
 		in.Fields = nil
@@ -116,7 +115,9 @@ func (in *Input) allowedInput(key string) bool {
 func (in *Input) GetInputValues() map[string]string {
 	values := make(map[string]string)
 	for _, input := range in.Fields {
-		values[input.ID] = input.GetText()
+		if input.GetText() != "" {
+			values[input.ID] = input.GetText()
+		}
 	}
 	return values
 }
