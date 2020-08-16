@@ -29,7 +29,7 @@ Option | Description
 --tty | enable docker exec tty option.
 --color | display ANSI colors in command output.
 -h	| display help dialog
--c  | path to yml config file or url to download yml.
+-c  | path to yml config file or url to download yml, default - ./config.yml. Also yml config can be used from pipe
 -v	| output version information and exit
 
 ### Keybindings
