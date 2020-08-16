@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,14 +28,21 @@ type Config struct {
 func CnfInit(path string, configs ...interface{}) {
 	var err error
 	var data []byte
-	if data, err = ioutil.ReadFile(path); err != nil {
-		_, parseErr := url.Parse(path)
-		if parseErr == nil {
-			// Get from url
-			client := &http.Client{Timeout: time.Second}
-			if r, responseErr := client.Get(path); responseErr == nil {
-				data, err = ioutil.ReadAll(r.Body)
-				if err != nil {
+	var fi os.FileInfo
+    fi, err = os.Stdin.Stat()
+    if err != nil || fi.Mode() & os.ModeNamedPipe == 0 {
+		if data, err = ioutil.ReadFile(path); err != nil {
+			_, parseErr := url.Parse(path)
+			if parseErr == nil {
+				// Get from url
+				client := &http.Client{Timeout: time.Second}
+				if r, responseErr := client.Get(path); responseErr == nil {
+					data, err = ioutil.ReadAll(r.Body)
+					if err != nil {
+						fmt.Printf("Can't open config from %v", path)
+						os.Exit(0)
+					}
+				} else {
 					fmt.Printf("Can't open config from %v", path)
 					os.Exit(0)
 				}
@@ -40,10 +50,30 @@ func CnfInit(path string, configs ...interface{}) {
 				fmt.Printf("Can't open config from %v", path)
 				os.Exit(0)
 			}
-		} else {
-			fmt.Printf("Can't open config from %v", path)
-			os.Exit(0)
 		}
+
+	} else {
+		// Here we have data from pipe.
+		var n int
+		reader := bufio.NewReader(os.Stdin)
+		buf := make([]byte, 0, 256)
+		for {
+			n, err = reader.Read(buf[:cap(buf)])
+			data = append(data, buf[:n]...)
+			if n == 0 {
+				if err == nil {
+					continue
+				}
+				if err == io.EOF {
+					break
+				}
+				log.Fatal(err)
+			}
+			if err != nil && err != io.EOF {
+				log.Fatal(err)
+			}
+		}
+
 	}
 	for _, cfg := range configs {
 		data = []byte(os.ExpandEnv(string(data)))
