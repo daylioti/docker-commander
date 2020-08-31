@@ -24,15 +24,15 @@ func (d *Docker) Init(ops ...client.Opt) {
 	if d.client, err = client.NewClientWithOpts(ops...); err != nil {
 		panic(err)
 	}
-	ping, err := d.client.Ping(d.context)
+	_, err = d.client.Ping(d.context)
 	if err != nil {
 		panic(err)
 	}
 	min, _ := strconv.ParseFloat(api.MinVersion, 32)
-	clientAPIVersion, _ := strconv.ParseFloat(ping.APIVersion, 32)
+	clientAPIVersion, _ := strconv.ParseFloat(d.Ping.APIVersion, 32)
 	max, _ := strconv.ParseFloat(api.DefaultVersion, 32)
 	if min <= clientAPIVersion && clientAPIVersion <= max {
-		ops = append(ops, client.WithVersion(ping.APIVersion))
+		ops = append(ops, client.WithVersion(d.Ping.APIVersion))
 	}
 	if d.client, err = client.NewClientWithOpts(ops...); err != nil {
 		panic(err)

@@ -8,7 +8,6 @@ import (
 	"github.com/gizak/termui/v3"
 )
 
-
 // UI main user interface struct.
 type UI struct {
 	ConfigUi *config.UIConfig
@@ -30,7 +29,7 @@ func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker, configUi *co
 	if ui.ConfigUi == nil {
 		ui.ConfigUi = configUi
 	}
-    if ui.Commands == nil {
+	if ui.Commands == nil {
 		ui.Commands = &commands.Commands{
 			ConfigUi:     ui.ConfigUi,
 			DockerClient: dockerClient,

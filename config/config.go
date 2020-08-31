@@ -29,8 +29,8 @@ func CnfInit(path string, configs ...interface{}) {
 	var err error
 	var data []byte
 	var fi os.FileInfo
-    fi, err = os.Stdin.Stat()
-    if err != nil || fi.Mode() & os.ModeNamedPipe == 0 {
+	fi, err = os.Stdin.Stat()
+	if err != nil || fi.Mode()&os.ModeNamedPipe == 0 {
 		if data, err = ioutil.ReadFile(path); err != nil {
 			_, parseErr := url.Parse(path)
 			if parseErr == nil {
@@ -111,7 +111,7 @@ func (cfg *Config) GetPlaceholders(path []int, placeholders map[string]string, c
 	if len(path) < 1 {
 		return cfg.mergePlaceholders(c, placeholders)
 	}
-	return cfg.GetPlaceholders(path[1:],  cfg.mergePlaceholders(c, placeholders), &c.Config[path[0]])
+	return cfg.GetPlaceholders(path[1:], cfg.mergePlaceholders(c, placeholders), &c.Config[path[0]])
 }
 
 // mergePlaceholders

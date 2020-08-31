@@ -31,7 +31,7 @@ func (in *Input) Handle(key string) {
 	switch key {
 	case "<Enter>":
 		in.Commands.Cnf.ReplacePlaceholders(in.GetInputValues(), &in.cnf)
-		placeholders :=  in.Commands.Cnf.GetPlaceholders(in.Commands.Menu.Path(in.Commands.Cnf), make(map[string]string), in.Commands.Cnf)
+		placeholders := in.Commands.Cnf.GetPlaceholders(in.Commands.Menu.Path(in.Commands.Cnf), make(map[string]string), in.Commands.Cnf)
 		in.Commands.Cnf.ReplacePlaceholders(placeholders, &in.cnf)
 		in.Commands.Menu.commandExecProcess(in.cnf)
 		in.Commands.Menu.UpdateRenderElements(in.Commands.Cnf)

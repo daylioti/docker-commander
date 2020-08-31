@@ -34,13 +34,13 @@ func (cmd *Commands) Init() {
 		}
 	}
 	cmd.Menu.Init()
-    if cmd.Terminal == nil {
+	if cmd.Terminal == nil {
 		cmd.Terminal = &Terminal{
 			Commands: cmd,
 		}
 	}
 	cmd.Terminal.Init()
-    if cmd.Input == nil {
+	if cmd.Input == nil {
 		cmd.Input = &Input{
 			Commands: cmd,
 		}
