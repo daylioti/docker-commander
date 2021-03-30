@@ -61,18 +61,30 @@ func main() {
 	UI.Init(Cnf, dockerClient, CnfUi)
 
 	uiEvents := termui.PollEvents()
+	searchBox := false
 	for e := range uiEvents {
-		switch e.ID {
-		case "<MouseLeft>", "<MouseRight>", "<MouseMiddle>", "<MouseRelease>":
+		switch true {
+		case e.ID == "<MouseLeft>" || e.ID == "<MouseRight>" || e.ID == "<MouseMiddle>" || e.ID == "<MouseRelease>":
 			continue
-		case "q", "<C-c>", "Q":
+		case e.ID == "<C-s>":
+			searchBox = !searchBox
+			UI.Commands.Search.Reset()
+			if searchBox {
+				UI.Commands.Search.Render()
+			}
+		case searchBox:
+			UI.Commands.Search.Handle(e.ID)
+			if len(UI.Commands.Search.Input) == 0  {
+				searchBox = false
+			}
+		case e.ID == "q" || e.ID == "<C-c>" || e.ID == "Q":
 			if len(UI.Commands.Input.Fields) > 0 && e.ID != "<C-c>" {
 				UI.Handle(e.ID)
 			} else {
 				return
 			}
 
-		case "<Resize>":
+		case e.ID == "<Resize>":
 			UI.Init(Cnf, dockerClient, CnfUi)
 		default:
 			UI.Handle(e.ID)

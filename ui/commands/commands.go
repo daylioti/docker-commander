@@ -18,12 +18,13 @@ type Commands struct {
 
 	DockerClient *docker.Docker
 	Cnf          *config.Config
-	Input        *Input
 	RenderAll    func()
 	SelectedArea byte
 
 	Menu     *Menu
+	Input    *Input
 	Terminal *Terminal
+	Search   *Search
 }
 
 func (cmd *Commands) Init() {
@@ -45,6 +46,12 @@ func (cmd *Commands) Init() {
 			Commands: cmd,
 		}
 	}
+	if cmd.Search == nil {
+		cmd.Search = &Search{
+			Commands: cmd,
+		}
+	}
+	cmd.Search.Init()
 }
 
 // Handle keyboard keys.
@@ -97,4 +104,5 @@ func (cmd *Commands) Render() {
 			render_lock.RenderLock(field)
 		}
 	}
+	render_lock.RenderLock(cmd.Search.Text)
 }

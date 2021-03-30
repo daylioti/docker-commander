@@ -7,6 +7,7 @@ import (
 	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"strconv"
+	"strings"
 )
 
 // Commands UI struct.
@@ -25,13 +26,13 @@ func (m *Menu) Init() {
 // Handle keyboard keys.
 func (m *Menu) Handle(key string) {
 	switch key {
-	case "<Up>", "K", "k":
+	case "<Up>", "K", "k", "<MouseWheelUp>":
 		m.changeSelected(0, -1, m.Commands.Cnf)
 	case "<Left>", "H", "h":
 		m.changeSelected(-1, 0, m.Commands.Cnf)
 	case "<Right>", "L", "l":
 		m.changeSelected(1, 0, m.Commands.Cnf)
-	case "<Down>", "J", "j":
+	case "<Down>", "J", "j", "<MouseWheelDown>":
 		m.changeSelected(0, 1, m.Commands.Cnf)
 	case "<Enter>":
 		selected := m.getSelected()
@@ -110,6 +111,23 @@ func (m *Menu) getNearestConfigs() (*config.Config, *config.Config, *config.Conf
 		}
 	}
 	return c, cp, cu, cd
+}
+
+// getSelectedConfigsList return list of selected configs.
+func (m *Menu) getSelectedConfigsList() []config.Config {
+	_, cp, _, _ := m.getNearestConfigs()
+	return cp.Config
+}
+
+// setCommandsSelectedIndex select menu item by index.
+func (m *Menu) setCommandsSelectedIndex(index int) {
+	cfg := m.getSelectedConfigsList()
+	for i, _ := range cfg {
+		cfg[i].Selected = false
+	}
+	cfg[index].Selected = true
+	m.UpdateRenderElements(m.Commands.Cnf)
+	m.Render()
 }
 
 // changeCommandsSelected change selected in cnf struct, depends on current selected item.
@@ -257,4 +275,15 @@ func (m *Menu) UpdateRenderElements(c *config.Config) {
 		widthPrev += width
 		c = &c.Config[pathIndex]
 	}
+}
+
+// Search return list of config elements array indexes.
+func (m *Menu) Search(key string) []int {
+	var res []int
+	for index, list := range m.getSelectedConfigsList() {
+		if strings.Contains(list.Name, key) {
+			res = append(res, index)
+		}
+	}
+	return res
 }
