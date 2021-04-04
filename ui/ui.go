@@ -38,7 +38,6 @@ func (ui *UI) Init(cnf *config.Config, dockerClient *docker.Docker, configUi *co
 		}
 	}
 	ui.Commands.TermWidth, ui.Commands.TermHeight = termui.TerminalDimensions()
-	ui.Commands.TermHeight = ui.Commands.TermHeight - 2
 	ui.Commands.Init()
 	termui.StyleParserColorMap = helpers.GetAllTermColors()
 	ui.Render()

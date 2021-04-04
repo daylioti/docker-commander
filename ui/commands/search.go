@@ -21,9 +21,7 @@ type Search struct {
 func (s *Search) Init() {
   s.Text = widgets.NewParagraph()
   s.Text.Border = false
-  width, _ := termui.TerminalDimensions()
   s.Text.PaddingBottom = -1
-  s.Text.SetRect(0, s.Commands.TermHeight, width, s.Commands.TermHeight +2)
 }
 
 // Handle keyboard keys.
@@ -65,18 +63,27 @@ func (s *Search) Render() {
 
 // Reset reset search box to defaults.
 func (s *Search) Reset() {
-	s.Text.Text = ""
+	s.Init()
 	s.Input = ""
 	s.searchIndexes = make([]int, 0)
 	s.selectedIndex = 0
+	_, s.Commands.TermHeight = termui.TerminalDimensions()
 	render_lock.RenderLock(s.Text)
 }
 
 // Search execute search.
 func (s *Search) Search() {
+	_, s.Commands.TermHeight = termui.TerminalDimensions()
+	s.Commands.TermHeight -= 2
+	width, _ := termui.TerminalDimensions()
+	s.Text.SetRect(0, s.Commands.TermHeight, width, s.Commands.TermHeight +2)
 	if s.Commands.SelectedArea == KeySelectedCommands {
 		s.searchIndexes = s.Commands.Menu.Search(s.Input)
 		s.Commands.Menu.setCommandsSelectedIndex(s.getSearchIndex())
+	} else if s.Commands.SelectedArea == KeySelectedTerminal {
+		s.searchIndexes = s.Commands.Terminal.Search(s.Input)
+		s.Commands.Terminal.DisplayTerminal.SelectedRow =  s.getSearchIndex()
+		s.Commands.Terminal.DisplayTerminalRender()
 	}
 	s.Render()
 }
@@ -99,6 +106,11 @@ func (s *Search) Next() {
 	} else {
 		s.selectedIndex++
 	}
-	s.Commands.Menu.setCommandsSelectedIndex(s.getSearchIndex())
+	if s.Commands.SelectedArea == KeySelectedCommands {
+		s.Commands.Menu.setCommandsSelectedIndex(s.getSearchIndex())
+	} else if s.Commands.SelectedArea == KeySelectedTerminal {
+		s.Commands.Terminal.DisplayTerminal.SelectedRow =  s.getSearchIndex()
+		s.Commands.Terminal.DisplayTerminalRender()
+	}
 	s.Render()
 }

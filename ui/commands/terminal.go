@@ -7,6 +7,7 @@ import (
 	commanderWidgets "github.com/daylioti/docker-commander/ui/widgets"
 	"github.com/gizak/termui/v3"
 	"strconv"
+	"strings"
 )
 
 // TerminalUI UI struct.
@@ -21,8 +22,7 @@ func (t *Terminal) Init() {
 	if t.DisplayTerminal == nil {
 		t.DisplayTerminal = t.InitDisplayTerminal()
 	}
-	t.DisplayTerminal.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight()+3,
-		t.Commands.TermWidth, t.Commands.TermHeight)
+	t.updateRect()
 	if t.TabPane == nil {
 		t.TabPane = commanderWidgets.NewTabPaneStyled()
 	}
@@ -35,13 +35,21 @@ func (t *Terminal) Init() {
 // InitDisplayTerminal initialize command output list.
 func (t *Terminal) InitDisplayTerminal() *commanderWidgets.TerminalList {
 	list := commanderWidgets.NewTerminalList()
-	list.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight()+3,
-		t.Commands.TermWidth, t.Commands.TermHeight)
+	t.updateRect()
 	return list
+}
+
+// updateRect update terminal rect.
+func (t *Terminal) updateRect() {
+	if t.DisplayTerminal != nil {
+		t.DisplayTerminal.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight()+3,
+			t.Commands.TermWidth, t.Commands.TermHeight)
+	}
 }
 
 // Render function, that render terminal component.
 func (t *Terminal) Render() {
+	t.updateRect()
 	t.TabPaneRender()
 	t.DisplayTerminalRender()
 }
@@ -138,7 +146,7 @@ func (t *Terminal) GetIDFromPath(path []int) string {
 
 // SwitchTerminal set selected terminal with id.
 func (t *Terminal) SwitchTerminal(term *docker.TerminalRun) {
-	t.unActivateTerminals()
+	t.deactivateTerminals()
 	term.Active = true
 	t.DisplayTerminal = term.List
 	t.UpdateRunningStatus()
@@ -215,11 +223,24 @@ func (t *Terminal) removeFinishedTerminals() {
 	}
 }
 
-// unActivateTerminals set active to false on all terminals.
-func (t *Terminal) unActivateTerminals() {
+// deactivateTerminals set active to false on all terminals.
+func (t *Terminal) deactivateTerminals() {
 	for _, term := range t.Commands.DockerClient.Exec.Terminals {
 		term.Active = false
 	}
+}
+
+// Search return list of row elements array indexes.
+func (t *Terminal) Search(key string) []int {
+	var res []int
+	if t.DisplayTerminal != nil {
+		for index, row := range t.DisplayTerminal.Rows {
+			if strings.Contains(row, key) {
+				res = append(res, index)
+			}
+		}
+	}
+	return res
 }
 
 // NewTerminal return new terminal object,
@@ -229,7 +250,7 @@ func (t *Terminal) NewTerminal(config config.Config, id string) *docker.Terminal
 	list.SetRect(0, t.Commands.ConfigUi.GetCommandsHeight()+3,
 		t.Commands.TermWidth, t.Commands.TermHeight)
 	t.removeFinishedTerminals()
-	t.unActivateTerminals()
+	t.deactivateTerminals()
 	return &docker.TerminalRun{
 		TabItem: &commanderWidgets.TabItem{
 			Name:  config.Name,

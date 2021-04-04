@@ -99,6 +99,7 @@ func (cmd *Commands) HandleKeys(key string) {
 func (cmd *Commands) Render() {
 	cmd.Menu.Render()
 	cmd.Terminal.Render()
+	cmd.Search.Render()
 	if len(cmd.Input.Fields) > 0 {
 		for _, field := range cmd.Input.Fields {
 			render_lock.RenderLock(field)

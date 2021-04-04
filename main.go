@@ -66,12 +66,14 @@ func main() {
 		switch true {
 		case e.ID == "<MouseLeft>" || e.ID == "<MouseRight>" || e.ID == "<MouseMiddle>" || e.ID == "<MouseRelease>":
 			continue
-		case e.ID == "<C-s>":
+		case e.ID == "<C-s>" || searchBox && e.ID == "<Enter>":
 			searchBox = !searchBox
-			UI.Commands.Search.Reset()
-			if searchBox {
-				UI.Commands.Search.Render()
+			if !searchBox {
+				UI.Commands.Search.Reset()
+			} else {
+				UI.Commands.Search.Search()
 			}
+			UI.Render()
 		case searchBox:
 			UI.Commands.Search.Handle(e.ID)
 			if len(UI.Commands.Search.Input) == 0  {
