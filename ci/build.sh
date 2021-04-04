@@ -3,7 +3,7 @@
 
 GOARCH=${_GOARCH}
 GOOS=${_GOOS}
-env GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "-s -w -X github.com/daylioti/docker-commander/version.Version=${TRAVIS_BRANCH}" -o ${NAME} || ERROR=true
+env GOOS=${GOOS} GOARCH=${GOARCH} go build -mod=mod -ldflags "-s -w -X github.com/daylioti/docker-commander/version.Version=${TRAVIS_BRANCH}" -o ${NAME} || ERROR=true
 if [ "${_GOOS}" == "linux" ]; then
   /bin/bash ./ci/install_upx.sh
   ./upx --brute docker-commander
