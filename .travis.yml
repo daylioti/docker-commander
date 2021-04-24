@@ -39,8 +39,6 @@ install: true
 script:
   - ./ci/install_upx.sh
   - ./ci/build.sh
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
-  - golangci-lint run --timeout=30m
 
 
 deploy:
