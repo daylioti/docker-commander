@@ -76,7 +76,7 @@ func main() {
 			UI.Render()
 		case searchBox:
 			UI.Commands.Search.Handle(e.ID)
-			if len(UI.Commands.Search.Input) == 0  {
+			if len(UI.Commands.Search.Input) == 0 {
 				searchBox = false
 			}
 		case e.ID == "q" || e.ID == "<C-c>" || e.ID == "Q":
