@@ -122,7 +122,7 @@ func (m *Menu) getSelectedConfigsList() []config.Config {
 // setCommandsSelectedIndex select menu item by index.
 func (m *Menu) setCommandsSelectedIndex(index int) {
 	cfg := m.getSelectedConfigsList()
-	for i, _ := range cfg {
+	for i := range cfg {
 		cfg[i].Selected = false
 	}
 	cfg[index].Selected = true
